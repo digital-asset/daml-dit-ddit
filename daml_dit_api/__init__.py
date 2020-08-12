@@ -14,12 +14,19 @@ def _empty_commands() -> 'Sequence[Command]':
     return list()
 
 
+def _empty_tags() -> 'Sequence[str]':
+    return list()
+
+
 @dataclass(frozen=True)
 class IntegrationTypeFieldInfo:
     id: str
     name: str
     description: str
     field_type: str
+    help_url: 'Optional[str]' = None
+    default_value: 'Optional[str]' = None
+    required: 'Optional[bool]' = True
 
 
 @dataclass(frozen=True)
@@ -32,6 +39,7 @@ class IntegrationTypeInfo:
     entrypoint: str
     env_class: 'Optional[str]'
     runtime: 'Optional[str]' = 'python-file'
+    help_url: 'Optional[str]' = None
 
 
 @dataclass(frozen=True)
@@ -46,6 +54,8 @@ class CatalogInfo:
     license: 'Optional[str]'
     experimental: 'Optional[bool]'
     demo_url: 'Optional[str]'
+    source_url: 'Optional[str]'
+    tags: 'Optional[Sequence[str]]' = field(default_factory=_empty_tags)
 
 
 DABL_META_NAME = 'dabl-meta.yaml'

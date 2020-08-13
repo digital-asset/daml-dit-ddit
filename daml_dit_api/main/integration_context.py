@@ -59,24 +59,10 @@ class IntegrationStatus:
     timers: 'Optional[IntegrationTimeStatus]'
 
 
-def normalize_template_filter(template_filter: str):
-    delim_loc = template_filter.find(':')
-
-    if delim_loc >= 0:
-        template_filter = template_filter[delim_loc+1:]
-
-    return template_filter.replace(':', '.')
-
 
 def normalize_metadata_field(field_value, field_type_info):
     LOG.debug('Normalizing %r with field_type_info: %r',
               field_value, field_type_info)
-
-    field_value = field_value.strip()
-
-    if field_type_info is not None \
-       and field_type_info.field_type == 'contract_template':
-        field_value = normalize_template_filter(field_value)
 
     return field_value.strip()
 

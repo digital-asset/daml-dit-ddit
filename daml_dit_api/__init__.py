@@ -55,7 +55,7 @@ class CatalogInfo:
     experimental: 'Optional[bool]'
     demo_url: 'Optional[str]'
     source_url: 'Optional[str]'
-    tags: 'Optional[Sequence[str]]' = field(default_factory=_empty_tags)
+    tags: 'Sequence[str]' = field(default_factory=_empty_tags)
 
 
 DABL_META_NAME = 'dabl-meta.yaml'

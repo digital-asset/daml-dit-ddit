@@ -1,8 +1,10 @@
 [tool.poetry]
 name = "daml-dit-api"
-version = "0.0.2"
+version = "0.0.3"
 description = "DABL Integrations API Package"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
+repository = "https://github.com/digital-asset/daml-dit-api"
+keywords = ["daml", "blockchain", "dlt", "distributed ledger", "digital asset"]
 
 [tool.poetry.dependencies]
 python = "^3.7"

@@ -40,6 +40,7 @@ class IntegrationTypeInfo:
     env_class: 'Optional[str]'
     runtime: 'Optional[str]' = 'python-file'
     help_url: 'Optional[str]' = None
+    instance_template: 'Optional[str]' = None
 
 
 @dataclass(frozen=True)
@@ -56,6 +57,9 @@ class CatalogInfo:
     demo_url: 'Optional[str]'
     source_url: 'Optional[str]'
     tags: 'Sequence[str]' = field(default_factory=_empty_tags)
+    short_description: 'Optional[str]' = None
+    group_id: 'Optional[str]' = None
+
 
 
 DABL_META_NAME = 'dabl-meta.yaml'

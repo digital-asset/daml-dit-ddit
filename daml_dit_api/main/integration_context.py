@@ -25,6 +25,7 @@ from daml_dit_api import \
     IntegrationTypeInfo, \
     IntegrationWebhookRoutes, \
     METADATA_INTEGRATION_ENABLED, \
+    METADATA_COMMON_RUN_AS_PARTY, \
     METADATA_INTEGRATION_RUN_AS_PARTY, \
     METADATA_INTEGRATION_TYPE_ID, \
     PackageMetadata
@@ -196,7 +197,15 @@ class IntegrationContext:
         metadata = self.integration_spec.metadata
         LOG.info('=== REGISTERING INTEGRATION: %r', self.integration_spec)
 
-        run_as_party = metadata[METADATA_INTEGRATION_RUN_AS_PARTY]
+        run_as_party = metadata.get(METADATA_COMMON_RUN_AS_PARTY)
+
+        if run_as_party is None:
+            LOG.info("Falling back to old-style integration 'run as' party.")
+            run_as_party = metadata.get(METADATA_INTEGRATION_RUN_AS_PARTY)
+
+        if run_as_party is None:
+            raise Exception("No 'run as' party specified for integration.")
+
         client = self.network.aio_party(run_as_party)
 
         artifact_hash = self.integration_spec.artifact_hash

@@ -294,6 +294,10 @@ IntegrationEntryPoint = \
     Callable[[IntegrationEnvironment, IntegrationEvents], None]
 
 
+
+METADATA_COMMON_RUN_AS_PARTY = 'runAs'
+METADATA_TRIGGER_NAME = 'triggerName'
+
 METADATA_INTEGRATION_ID = 'com.projectdabl.integrations.integrationId'
 METADATA_INTEGRATION_TYPE_ID = 'com.projectdabl.integrations.integrationTypeId'
 METADATA_INTEGRATION_COMMENT = 'com.projectdabl.integrations.comment'

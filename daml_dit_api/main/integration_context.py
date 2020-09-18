@@ -20,7 +20,7 @@ from daml_dit_api import \
     IntegrationEntryPoint, \
     IntegrationEnvironment, \
     IntegrationEvents, \
-    IntegrationSpec, \
+    IntegrationRuntimeSpec, \
     IntegrationTimeEvents, \
     IntegrationTypeInfo, \
     IntegrationWebhookRoutes, \
@@ -45,6 +45,7 @@ from .common import \
     with_marshalling, \
     as_handler_invocation
 
+from .config import Configuration
 
 from .log import LOG
 
@@ -144,13 +145,18 @@ def parse_qualified_symbol(symbol_text: str):
 class IntegrationContext:
 
     def __init__(self,
+                 config: 'Configuration',
                  network: 'Network',
-                 integration_spec: 'IntegrationSpec'):
+                 integration_spec: 'IntegrationRuntimeSpec'):
 
-        iid = integration_spec.integration_id
+        # Allow fallback to the spec file on disk, to support
+        # execution on DABL clusters that do not inject integration ID
+        # via an environment variable.
+        iid = config.integration_id or integration_spec.integration_id
 
         self.start_time = datetime.utcnow()
 
+        self.config = config
         self.network = network
         self.integration_spec = integration_spec
         self.dabl_meta = get_dabl_meta()
@@ -208,11 +214,19 @@ class IntegrationContext:
 
         client = self.network.aio_party(run_as_party)
 
-        artifact_hash = self.integration_spec.artifact_hash
+        if run_as_party is None:
+            raise Exception("No 'run as' party specified for integration.")
+
+        client = self.network.aio_party(run_as_party)
 
         integration_types = self._get_integration_types()
 
-        integration_type = integration_types[self.integration_spec.type_id]
+        # Allow fallback to the spec file on disk, to support
+        # execution on DABL clusters that do not inject type ID
+        # via an environment variable.
+        type_id = self.config.type_id or self.integration_spec.type_id
+
+        integration_type = integration_types[type_id]
 
         env_class = self.get_integration_env_class(integration_type)
         entry_fn = self.get_integration_entrypoint(integration_type)

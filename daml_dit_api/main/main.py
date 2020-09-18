@@ -18,7 +18,7 @@ from aiohttp.web import Application, AppRunner, TCPSite, RouteTableDef, \
 
 from dazl import Network
 
-from daml_dit_api import IntegrationSpec
+from daml_dit_api import IntegrationRuntimeSpec
 
 from .config import Configuration, get_default_config
 
@@ -50,14 +50,14 @@ def create_network(url: str) -> 'Network':
     return network
 
 
-def load_integration_spec(config: 'Configuration') -> 'IntegrationSpec':
+def load_integration_spec(config: 'Configuration') -> 'IntegrationRuntimeSpec':
     metadata_path = Path(config.integration_metadata_path)
 
     if metadata_path.exists():
         LOG.info('Loading integration metadata from: %r', metadata_path)
 
         return from_dict(
-            data_class=IntegrationSpec,
+            data_class=IntegrationRuntimeSpec,
             data=yaml.safe_load(metadata_path.read_bytes()))
     else:
         raise Exception('No metadata file found at: ' + repr(metadata_path))
@@ -71,7 +71,7 @@ async def _aio_main(config: 'Configuration'):
 
     integration_spec = load_integration_spec(config)
 
-    integration_context = IntegrationContext(network, integration_spec)
+    integration_context = IntegrationContext(config, network, integration_spec)
 
     await integration_context.safe_load_and_start()
 

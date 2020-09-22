@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "daml-dit-api"
-version = "0.1.1"
+version = "0.1.2"
 description = "DABL Integrations API Package"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
 readme = "README.md"

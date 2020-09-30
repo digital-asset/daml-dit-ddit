@@ -294,6 +294,9 @@ IntegrationEntryPoint = \
     Callable[[IntegrationEnvironment, IntegrationEvents], None]
 
 
+METADATA_COMMON_RUN_AS_PARTY = 'runAs'
+METADATA_TRIGGER_NAME = 'triggerName'
+
 METADATA_INTEGRATION_ID = 'com.projectdabl.integrations.integrationId'
 METADATA_INTEGRATION_TYPE_ID = 'com.projectdabl.integrations.integrationTypeId'
 METADATA_INTEGRATION_COMMENT = 'com.projectdabl.integrations.comment'
@@ -303,32 +306,10 @@ METADATA_INTEGRATION_RUNTIME = 'com.projectdabl.integrations.runtime'
 
 
 @dataclass(frozen=True)
-class IntegrationSpec:
+class IntegrationRuntimeSpec:
     integration_id: str
-    artifact_hash: str
     type_id: str
-    enabled: bool
     metadata: 'Mapping[str, str]'
-    runtime: 'Optional[str]' = 'python-file'
-
-    @classmethod
-    def from_dict(cls, json_obj):
-        integration_id = json_obj.get('integration_id')
-        artifact_hash = json_obj.get('artifact_hash')
-        type_id = json_obj.get('type_id')
-        enabled = json_obj.get('enabled')
-        metadata = json_obj.get('metadata')
-        runtime = json_obj.get('runtime')
-
-        return cls(integration_id=integration_id,
-                   artifact_hash=artifact_hash,
-                   type_id=type_id,
-                   enabled=enabled,
-                   metadata=metadata,
-                   runtime=runtime)
-
-    def to_dict(self) -> 'Mapping[str, Any]':
-        return asdict(self)
 
 
 def is_true(value: 'Optional[str]') -> bool:

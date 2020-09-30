@@ -59,7 +59,7 @@ class CatalogInfo:
     tags: 'Sequence[str]' = field(default_factory=_empty_tags)
     short_description: 'Optional[str]' = None
     group_id: 'Optional[str]' = None
-
+    icon_file: 'Optional[str]' = None
 
 
 DABL_META_NAME = 'dabl-meta.yaml'

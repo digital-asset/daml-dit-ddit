@@ -154,6 +154,12 @@ class IntegrationContext:
         # via an environment variable.
         iid = config.integration_id or integration_spec.integration_id
 
+        if not iid:
+            # Guide the user to provide the integration ID via the current
+            # environment variable rather than with the deprecated config
+            # file approach.
+            raise Exception('DABL_INTEGRATION_INTEGRATION_ID environment variable undefined')
+
         self.start_time = datetime.utcnow()
 
         self.config = config
@@ -214,17 +220,18 @@ class IntegrationContext:
 
         client = self.network.aio_party(run_as_party)
 
-        if run_as_party is None:
-            raise Exception("No 'run as' party specified for integration.")
-
-        client = self.network.aio_party(run_as_party)
-
         integration_types = self._get_integration_types()
 
         # Allow fallback to the spec file on disk, to support
         # execution on DABL clusters that do not inject type ID
         # via an environment variable.
         type_id = self.config.type_id or self.integration_spec.type_id
+
+        if not type_id:
+            # Guide the user to provide the type ID via the current
+            # environment variable rather than with the deprecated config
+            # file approach.
+            raise Exception('DABL_INTEGRATION_TYPE_ID environment variable undefined')
 
         integration_type = integration_types[type_id]
 

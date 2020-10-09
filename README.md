@@ -73,7 +73,6 @@ Available variables include the following:
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `DABL_HEALTH_PORT` | 8089 | Port for Health/Status HTTP endpoint |
-| `DABL_INTEGRATION_INTEGRATION_ID` | | Integration ID (arbitrary for testing, but required) |
 | `DABL_INTEGRATION_METADATA_PATH` | 'int_args.yaml' | Path to local metadata file |
 | `DABL_INTEGRATION_TYPE_ID` | | Type ID for the specific integration within the DIT to run |
 | `DABL_LEDGER_ID` | 'cloudbox' | Ledger ID for local ledger |

@@ -8,7 +8,6 @@ from functools import wraps
 from importlib import import_module
 from types import ModuleType
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
-from zipfile import ZipFile
 
 from dazl import AIOPartyClient, Network, Command
 from dazl.util.prim_types import to_boolean
@@ -16,7 +15,6 @@ from dazl.util.prim_types import to_boolean
 from dacite import from_dict, Config
 
 from daml_dit_api import \
-    DABL_META_NAME, \
     IntegrationEntryPoint, \
     IntegrationEnvironment, \
     IntegrationEvents, \
@@ -83,44 +81,6 @@ def normalize_metadata(metadata, integration_type):
 def _as_int(value: Any) -> int:
     return int(value)
 
-
-def get_local_dabl_meta() -> 'Optional[str]':
-    filename = f'pkg/{DABL_META_NAME}'
-
-    LOG.info('Attmpting to load DABL metadata from local file: %r', filename)
-
-    try:
-        with open(filename, "r") as f:
-            return f.read()
-    except:  # noqa
-        LOG.exception(f'Failed to local dabl meta {filename}')
-        return None
-
-
-def get_pex_dabl_meta() -> 'Optional[str]':
-    pex_filename = sys.argv[0]
-
-    LOG.info('Attmpting to load DABL metadata from PEX file: %r', pex_filename)
-
-    try:
-        with ZipFile(pex_filename) as zf:
-            with zf.open(DABL_META_NAME) as meta_file:
-                return meta_file.read().decode('UTF-8')
-    except:  # noqa
-        LOG.exception(f'Failed to read {DABL_META_NAME} from PEX file {pex_filename}'
-                      f' (This is an expected error in local development scenarios.)')
-        return None
-
-
-def get_dabl_meta() -> str:
-    meta = get_pex_dabl_meta() or get_local_dabl_meta()
-
-    if meta:
-        return meta
-
-    raise Exception(f'Could not find {DABL_META_NAME}')
-
-
 def parse_qualified_symbol(symbol_text: str):
 
     try:
@@ -145,27 +105,17 @@ def parse_qualified_symbol(symbol_text: str):
 class IntegrationContext:
 
     def __init__(self,
-                 config: 'Configuration',
                  network: 'Network',
+                 integration_type: 'IntegrationTypeInfo',
+                 type_id: str,
                  integration_spec: 'IntegrationRuntimeSpec'):
-
-        # Allow fallback to the spec file on disk, to support
-        # execution on DABL clusters that do not inject integration ID
-        # via an environment variable.
-        iid = config.integration_id or integration_spec.integration_id
-
-        if not iid:
-            # Guide the user to provide the integration ID via the current
-            # environment variable rather than with the deprecated config
-            # file approach.
-            raise Exception('DABL_INTEGRATION_INTEGRATION_ID environment variable undefined')
 
         self.start_time = datetime.utcnow()
 
-        self.config = config
+        self.type_id = type_id
         self.network = network
+        self.integration_type = integration_type
         self.integration_spec = integration_spec
-        self.dabl_meta = get_dabl_meta()
 
         self.running = False
         self.error_message = None  # type: Optional[str]
@@ -195,15 +145,6 @@ class IntegrationContext:
         else:
             return IntegrationEnvironment
 
-    def _get_integration_types(self):
-        package_meta = from_dict(
-            data_class=PackageMetadata, data=yaml.safe_load(self.dabl_meta))
-
-        package_itypes = (package_meta.integration_types
-                          or package_meta.integrations  # support for deprecated
-                          or [])
-
-        return {itype.id: itype for itype in package_itypes}
 
     async def _load_and_start(self):
         metadata = self.integration_spec.metadata
@@ -220,25 +161,10 @@ class IntegrationContext:
 
         client = self.network.aio_party(run_as_party)
 
-        integration_types = self._get_integration_types()
+        env_class = self.get_integration_env_class(self.integration_type)
+        entry_fn = self.get_integration_entrypoint(self.integration_type)
 
-        # Allow fallback to the spec file on disk, to support
-        # execution on DABL clusters that do not inject type ID
-        # via an environment variable.
-        type_id = self.config.type_id or self.integration_spec.type_id
-
-        if not type_id:
-            # Guide the user to provide the type ID via the current
-            # environment variable rather than with the deprecated config
-            # file approach.
-            raise Exception('DABL_INTEGRATION_TYPE_ID environment variable undefined')
-
-        integration_type = integration_types[type_id]
-
-        env_class = self.get_integration_env_class(integration_type)
-        entry_fn = self.get_integration_entrypoint(integration_type)
-
-        metadata = normalize_metadata(metadata, integration_type)
+        metadata = normalize_metadata(metadata, self.integration_type)
 
         LOG.info("Starting integration with metadata: %r", metadata)
 

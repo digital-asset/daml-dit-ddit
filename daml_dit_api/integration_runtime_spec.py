@@ -14,6 +14,5 @@ METADATA_INTEGRATION_RUNTIME = 'com.projectdabl.integrations.runtime'
 
 @dataclass(frozen=True)
 class IntegrationRuntimeSpec:
-    integration_id: 'Optional[str]'
     type_id: 'Optional[str]'
     metadata: 'Mapping[str, str]'

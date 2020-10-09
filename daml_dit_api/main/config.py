@@ -11,7 +11,6 @@ class Configuration:
     ledger_url: str
     ledger_id: str
     integration_metadata_path: str
-    integration_id: 'Optional[str]'
     type_id: 'Optional[str]'
 
 
@@ -51,7 +50,6 @@ def get_default_config() -> 'Configuration':
         ledger_url=env('DABL_LEDGER_URL', 'http://localhost:6865'),
         ledger_id=env('DABL_LEDGER_ID', 'cloudbox'),
         integration_metadata_path=env('DABL_INTEGRATION_METADATA_PATH', 'int_args.yaml'),
-        integration_id=optenv('DABL_INTEGRATION_INTEGRATION_ID'),
         type_id=optenv('DABL_INTEGRATION_TYPE_ID'))
 
     LOG.info('Configuration: %r', asdict(config))

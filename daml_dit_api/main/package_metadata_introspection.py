@@ -51,12 +51,16 @@ def get_package_metadata() -> 'PackageMetadata':
     raise Exception(f'Could not find {DABL_META_NAME}')
 
 
-def get_integration_types() -> 'Dict[str, IntegrationTypeInfo]':
-
-    package_metadata = get_package_metadata()
+def package_meta_integration_types(
+        package_metadata: 'PackageMetadata') -> 'Dict[str, IntegrationTypeInfo]':
 
     package_itypes = (package_metadata.integration_types
                       or package_metadata.integrations  # support for deprecated
                       or [])
 
     return {itype.id: itype for itype in package_itypes}
+
+
+def get_integration_types() -> 'Dict[str, IntegrationTypeInfo]':
+
+    return package_meta_integration_types(get_package_metadata())

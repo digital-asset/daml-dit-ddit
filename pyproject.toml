@@ -12,6 +12,7 @@ python = "^3.7"
 aiohttp = "*"
 dacite = "*"
 dazl = "^7"
+pyyaml = "^5"
 
 [tool.poetry.dev-dependencies]
 mypy = "*"
@@ -21,6 +22,9 @@ pytest-codestyle = "*"
 
 [tool.poetry.extras]
 develop = []
+
+[tool.poetry.scripts]
+ddit = "daml_dit_api.ddit:main"
 
 [build-system]
 requires = ["poetry_core==1.0.0a8"]

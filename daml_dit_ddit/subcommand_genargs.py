@@ -1,9 +1,10 @@
 from daml_dit_api import IntegrationTypeInfo
 
-from ..main.package_metadata_introspection import \
+from .common import \
+    load_dabl_meta, \
+    show_integration_types, \
     package_meta_integration_types
 
-from .common import load_dabl_meta, show_integration_types
 
 def generate_argfile(integration_type: 'IntegrationTypeInfo'):
     print('"metadata":')
@@ -27,5 +28,7 @@ def subcommand_main(type_id):
 
         show_integration_types(dabl_meta)
 
-def setup_argparse(sp):
+
+def setup(sp):
     sp.add_argument('type_id', metavar='type_id')
+    return subcommand_main

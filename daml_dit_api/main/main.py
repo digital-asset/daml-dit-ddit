@@ -49,13 +49,9 @@ def load_integration_spec(config: 'Configuration') -> 'Optional[IntegrationRunti
 
         LOG.info('Integration metadata: %r', yaml_metadata)
 
-        if yaml_metadata:
-            return from_dict(
-                data_class=IntegrationRuntimeSpec,
-                data=yaml_metadata)
-        else:
-            LOG.warn(f'Empty argument file at {metadata_path}. (Normal during generate-argfile)')
-            return None
+        return from_dict(
+            data_class=IntegrationRuntimeSpec,
+            data=yaml_metadata)
 
     else:
         LOG.error(f'No metadata file found at: {repr(metadata_path)}')
@@ -104,25 +100,6 @@ async def _aio_main(
     await gather(web_coro, dazl_coro, integration_coro)
 
 
-def get_mode():
-    if len(sys.argv) > 1:
-        mode = sys.argv[1]
-    else:
-        mode = 'run'
-
-    LOG.info('Integration Mode: %r', mode)
-
-    return mode
-
-
-def generate_argfile(integration_type: 'IntegrationTypeInfo'):
-    print('"metadata":')
-
-    print(f'    "runAs": "party"')
-    for field in integration_type.fields:
-        print(f'    "{field.id.strip()}": "{field.field_type.strip()}"')
-
-
 def main():
     setup_default_logging(level=logging.DEBUG)
 
@@ -155,10 +132,7 @@ def main():
     if not integration_type:
         FAIL(f'No integration of type {type_id}')
 
-    if get_mode() == 'generate-argfile':
-        generate_argfile(integration_type)
-
-    elif integration_spec:
+    if integration_spec:
         LOG.info('Running integration type: %r...', type_id)
 
         loop = get_event_loop()

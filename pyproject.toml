@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "daml-dit-ddit"
-version = "0.2.0"
+version = "0.3.0"
 description = "DABL DIT File Tool"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
 readme = "README.md"
@@ -13,6 +13,8 @@ dacite = "*"
 pyyaml = "^5"
 pex = "2.1.18"
 daml-dit-api = "0.2.0"
+GitPython = "3.1.9"
+PyGithub = "1.53"
 
 [tool.poetry.dev-dependencies]
 mypy = "*"

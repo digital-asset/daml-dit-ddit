@@ -12,15 +12,26 @@ from daml_dit_api import \
 from .log import LOG
 
 
+def die(message: str):
+    LOG.error(f'Fatal Error: {message}')
+    sys.exit(9)
+
+
 def accept_dabl_meta(data: bytes) -> 'PackageMetadata':
-    return from_dict(
-        data_class=PackageMetadata,
-        data=yaml.safe_load(data))
+    try:
+        return from_dict(
+            data_class=PackageMetadata,
+            data=yaml.safe_load(data))
+    except:
+        die(f'Error loading project metadata file: {DABL_META_NAME}')
 
 
 def load_dabl_meta() -> 'PackageMetadata':
-    with open(DABL_META_NAME, "r") as f:
-        return accept_dabl_meta(f.read())
+    try:
+        with open(DABL_META_NAME, "r") as f:
+            return accept_dabl_meta(f.read())
+    except FileNotFoundError:
+        die(f'Project metadata file not found: {DABL_META_NAME}')
 
 
 def package_meta_integration_types(
@@ -31,6 +42,10 @@ def package_meta_integration_types(
                       or [])
 
     return {itype.id: itype for itype in package_itypes}
+
+
+def package_dit_filename(dabl_meta: 'PackageMetadata'):
+    return f'{dabl_meta.catalog.name}-{dabl_meta.catalog.version}.dit'
 
 
 def show_integration_types(dabl_meta: 'PackageMetadata'):
@@ -56,8 +71,3 @@ def package_meta_yaml(dabl_meta: 'PackageMetadata'):
         asdict(dabl_meta),
         default_flow_style=True,
         default_style='"')
-
-
-def die(message: str):
-    LOG.error(f'Fatal Error: {message}')
-    sys.exit(9)

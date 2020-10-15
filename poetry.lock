@@ -101,7 +101,7 @@ description = "high-level Ledger API client for DAML ledgers"
 name = "dazl"
 optional = false
 python-versions = ">=3.6,<4.0"
-version = "7.3.0"
+version = "7.3.1"
 
 [package.dependencies]
 grpcio = ">=1.29.1"
@@ -115,6 +115,28 @@ oauth = ["google-auth", "oauthlib"]
 prometheus = ["prometheus-client"]
 pygments = ["pygments"]
 server = ["aiohttp"]
+
+[[package]]
+category = "main"
+description = "Git Object Database"
+name = "gitdb"
+optional = false
+python-versions = ">=3.4"
+version = "4.0.5"
+
+[package.dependencies]
+smmap = ">=3.0.1,<4"
+
+[[package]]
+category = "main"
+description = "Python Git Library"
+name = "gitpython"
+optional = false
+python-versions = ">=3.4"
+version = "3.1.9"
+
+[package.dependencies]
+gitdb = ">=4.0.1,<5"
 
 [[package]]
 category = "main"
@@ -343,6 +365,14 @@ version = "1.15.0"
 
 [[package]]
 category = "main"
+description = "A pure Python implementation of a sliding window memory map manager"
+name = "smmap"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "3.0.4"
+
+[[package]]
+category = "main"
 description = "Implements a topological sort algorithm."
 name = "toposort"
 optional = false
@@ -402,7 +432,7 @@ multidict = ">=4.0"
 develop = []
 
 [metadata]
-content-hash = "883aa994ea2a2a4b04f6e1ec05eb9a13551671610a6d88cd1ab60394628d0edc"
+content-hash = "c0a7109c633a7a4761ff0496c8ddfadbf5364b475be76194d376a1c4baa80516"
 python-versions = "3.8.*"
 
 [metadata.files]
@@ -453,8 +483,16 @@ daml-dit-api = [
     {file = "daml_dit_api-0.2.0-py3-none-any.whl", hash = "sha256:c453a98df300116a31f7754b79a3af3e28b6ef9d25c97dcecd6a9088436a84a8"},
 ]
 dazl = [
-    {file = "dazl-7.3.0-py3-none-any.whl", hash = "sha256:b5a7a1bd0c144bcfd1b93936af9c9d50d5fbb30becec736da3613fccebd1a6f2"},
-    {file = "dazl-7.3.0.tar.gz", hash = "sha256:d4c1f0cb9a8908fd831f8d4cabf220a883d8c80b9ca70a1e4257cc8337e45f66"},
+    {file = "dazl-7.3.1-py3-none-any.whl", hash = "sha256:f7d95d2610ecf5e45095fa40756e573072b9b79f6fa8114e28d559eba6687516"},
+    {file = "dazl-7.3.1.tar.gz", hash = "sha256:1b9e78fd5a83303233a4a56c271076b208e03b00116711f4bf244f8322625bdc"},
+]
+gitdb = [
+    {file = "gitdb-4.0.5-py3-none-any.whl", hash = "sha256:91f36bfb1ab7949b3b40e23736db18231bf7593edada2ba5c3a174a7b23657ac"},
+    {file = "gitdb-4.0.5.tar.gz", hash = "sha256:c9e1f2d0db7ddb9a704c2a0217be31214e91a4fe1dea1efad19ae42ba0c285c9"},
+]
+gitpython = [
+    {file = "GitPython-3.1.9-py3-none-any.whl", hash = "sha256:138016d519bf4dd55b22c682c904ed2fd0235c3612b2f8f65ce218ff358deed8"},
+    {file = "GitPython-3.1.9.tar.gz", hash = "sha256:a03f728b49ce9597a6655793207c6ab0da55519368ff5961e4a74ae475b9fa8e"},
 ]
 grpcio = [
     {file = "grpcio-1.32.0-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:3afb058b6929eba07dba9ae6c5b555aa1d88cb140187d78cc510bd72d0329f28"},
@@ -623,6 +661,10 @@ semver = [
 six = [
     {file = "six-1.15.0-py2.py3-none-any.whl", hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"},
     {file = "six-1.15.0.tar.gz", hash = "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259"},
+]
+smmap = [
+    {file = "smmap-3.0.4-py2.py3-none-any.whl", hash = "sha256:54c44c197c819d5ef1991799a7e30b662d1e520f2ac75c9efbeb54a742214cf4"},
+    {file = "smmap-3.0.4.tar.gz", hash = "sha256:9c98bbd1f9786d22f14b3d4126894d56befb835ec90cef151af566c7e19b5d24"},
 ]
 toposort = [
     {file = "toposort-1.5-py2.py3-none-any.whl", hash = "sha256:d80128b83b411d503b0cdb4a8f172998bc1d3b434b6402a349b8ebd734d51a80"},

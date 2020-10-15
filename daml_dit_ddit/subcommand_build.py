@@ -1,5 +1,8 @@
 import os
 import subprocess
+from dataclasses import replace
+from datetime import date
+
 from pathlib import Path
 
 from zipfile import ZipFile
@@ -17,9 +20,13 @@ from pex.resolver import \
 from daml_dit_api import \
     DABL_META_NAME
 
-from ..main.log import LOG
+from .log import LOG
 
-from .common import load_dabl_meta, show_integration_types, die
+from .common import \
+    load_dabl_meta, \
+    package_meta_yaml, \
+    show_integration_types, \
+    die
 
 
 def check_target_file(filename: str, force: bool):
@@ -35,7 +42,7 @@ def build_pex(pex_filename: str):
 
     pex_builder.info.inherit_path = True
 
-    pex_builder.set_entry_point('daml_dit_api.main')
+    pex_builder.set_entry_point('daml_dit_if.main')
     pex_builder.set_shebang('/usr/bin/env python3')
 
     platforms = [
@@ -136,11 +143,20 @@ def subcommand_main(force: bool):
         if dar_filename:
             pexfile.write(dar_filename)
 
-        pexfile.write(DABL_META_NAME)
+            dabl_meta = replace(
+                dabl_meta,
+                catalog=replace(dabl_meta.catalog,
+                                release_date=date.today()),
+                subdeployments=[*(dabl_meta.subdeployments or []), dar_filename])
+
+        pexfile.writestr(DABL_META_NAME, package_meta_yaml(dabl_meta))
 
     os.rename(tmp_filename, dit_filename)
 
 
-def setup_argparse(sp):
-    sp.add_argument('--force', dest='force', action='store_true', default=False)
+def setup(sp):
+    sp.add_argument('--force', help='Forcibly overwrite target files if they exist',
+                    dest='force', action='store_true', default=False)
+
+    return subcommand_main
 

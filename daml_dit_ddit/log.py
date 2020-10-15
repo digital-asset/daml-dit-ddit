@@ -16,4 +16,4 @@ def setup_default_logging(**overrides):
     logging.basicConfig(**config)
 
 
-LOG = logging.getLogger('integration')
+LOG = logging.getLogger('ddit')

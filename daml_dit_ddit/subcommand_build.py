@@ -25,6 +25,7 @@ from .log import LOG
 from .common import \
     load_dabl_meta, \
     package_meta_yaml, \
+    package_dit_filename, \
     show_integration_types, \
     die
 
@@ -95,13 +96,19 @@ def build_pex(pex_filename: str):
         deterministic_timestamp=True)
 
 
-def build_dar(base_filename: str, force: bool) -> 'Optional[str]':
+def build_dar(base_filename: str, rebuild_dar: bool) -> 'Optional[str]':
     if not os.path.exists('daml.yaml'):
         return None
 
     dar_filename = f'{base_filename}.dar'
 
-    check_target_file(dar_filename, force)
+    if os.path.exists(dar_filename):
+        if rebuild_dar:
+            LOG.warn(f'>>>>> REPLACING EXISTING DAR: {dar_filename}.')
+            os.remove(dar_filename)
+        else:
+            LOG.info(f'Retaining existing DAR: {dar_filename}.')
+            return dar_filename
 
     LOG.info(f'Building DAR file: {dar_filename}')
 
@@ -113,13 +120,14 @@ def build_dar(base_filename: str, force: bool) -> 'Optional[str]':
     return dar_filename
 
 
-def subcommand_main(force: bool):
+def subcommand_main(force: bool, rebuild_dar: bool):
     dabl_meta = load_dabl_meta()
 
     base_filename = f'{dabl_meta.catalog.name}-{dabl_meta.catalog.version}'
 
     tmp_filename = f'{base_filename}.tmp'
-    dit_filename = f'{base_filename}.dit'
+
+    dit_filename = package_dit_filename(dabl_meta)
 
     if os.path.exists(tmp_filename):
         LOG.warn(f'Deleting temporary file: {tmp_filename}')
@@ -129,7 +137,7 @@ def subcommand_main(force: bool):
 
     LOG.info(f'Building {dit_filename}')
 
-    dar_filename = build_dar(base_filename, force)
+    dar_filename = build_dar(base_filename, rebuild_dar)
     build_pex(tmp_filename)
 
     LOG.info('Enriching output DIT file...')
@@ -157,6 +165,9 @@ def subcommand_main(force: bool):
 def setup(sp):
     sp.add_argument('--force', help='Forcibly overwrite target files if they exist',
                     dest='force', action='store_true', default=False)
+
+    sp.add_argument('--rebuild-dar', help='Rebuild and overwrite the DAR if it already exists',
+                    dest='rebuild_dar', action='store_true', default=False)
 
     return subcommand_main
 

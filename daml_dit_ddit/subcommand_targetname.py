@@ -1,20 +1,12 @@
 import os
 
-from .log import LOG
-
 from .common import \
     load_dabl_meta, \
-    die
+    package_dit_filename
 
 
 def subcommand_main():
-    dabl_meta = load_dabl_meta()
-
-    base_filename = f'{dabl_meta.catalog.name}-{dabl_meta.catalog.version}'
-
-    dit_filename = f'{base_filename}.dit'
-
-    print(dit_filename)
+    print(package_dit_filename(load_dabl_meta()))
 
 
 def setup(sp):

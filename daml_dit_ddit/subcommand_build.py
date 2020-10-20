@@ -140,9 +140,14 @@ def subcommand_main(force: bool, rebuild_dar: bool):
     dar_filename = build_dar(base_filename, rebuild_dar)
     build_pex(tmp_filename)
 
+    subdeployments = (dabl_meta.subdeployments or [])
+
+    resource_files = set()
+
     LOG.info('Enriching output DIT file...')
     with ZipFile(tmp_filename, 'a') as pexfile:
         for pkg_filename in os.listdir('pkg'):
+            resource_files.add(pkg_filename)
             file_bytes = Path(f'pkg/{pkg_filename}').read_bytes()
 
             LOG.info(f'  Adding package file: {pkg_filename}, len=={len(file_bytes)}')
@@ -150,14 +155,21 @@ def subcommand_main(force: bool, rebuild_dar: bool):
 
         if dar_filename:
             pexfile.write(dar_filename)
+            resource_files.add(dar_filename)
+
+            subdeployments=[*subdeployments, dar_filename]
 
             dabl_meta = replace(
                 dabl_meta,
                 catalog=replace(dabl_meta.catalog,
                                 release_date=date.today()),
-                subdeployments=[*(dabl_meta.subdeployments or []), dar_filename])
+                subdeployments=subdeployments)
 
         pexfile.writestr(DABL_META_NAME, package_meta_yaml(dabl_meta))
+
+    for subdeployment in subdeployments:
+        if subdeployment not in resource_files:
+            die(f'Subdeployment {subdeployment} not available in DIT file resources: {resource_files}')
 
     os.rename(tmp_filename, dit_filename)
 

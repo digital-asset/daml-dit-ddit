@@ -120,7 +120,7 @@ def build_dar(base_filename: str, rebuild_dar: bool) -> 'Optional[str]':
     return dar_filename
 
 
-def subcommand_main(force: bool, rebuild_dar: bool):
+def subcommand_main(is_integration: bool, force: bool, rebuild_dar: bool):
     dabl_meta = load_dabl_meta()
 
     base_filename = f'{dabl_meta.catalog.name}-{dabl_meta.catalog.version}'
@@ -138,7 +138,14 @@ def subcommand_main(force: bool, rebuild_dar: bool):
     LOG.info(f'Building {dit_filename}')
 
     dar_filename = build_dar(base_filename, rebuild_dar)
-    build_pex(tmp_filename)
+
+    if is_integration:
+        LOG.warn('Building as integration. Authorization will be required to install in DABL.')
+        build_pex(tmp_filename)
+
+    elif dabl_meta.integration_types and len(dabl_meta.integration_types):
+        die('daml-meta.yaml specifies integration types and therefore '
+            'must be built with --integration')
 
     subdeployments = (dabl_meta.subdeployments or [])
 
@@ -177,6 +184,10 @@ def subcommand_main(force: bool, rebuild_dar: bool):
 def setup(sp):
     sp.add_argument('--force', help='Forcibly overwrite target files if they exist',
                     dest='force', action='store_true', default=False)
+
+    sp.add_argument('--integration', help='Build DIT file with integration support. '
+                    'DA approval requried to deploy.',
+                    dest='is_integration', action='store_true', default=False)
 
     sp.add_argument('--rebuild-dar', help='Rebuild and overwrite the DAR if it already exists',
                     dest='rebuild_dar', action='store_true', default=False)

@@ -18,7 +18,7 @@ from .subcommand_build import \
 from .log import LOG
 
 
-def subcommand_main(build: bool, force: bool, dry_run: bool):
+def subcommand_main(is_integration: bool, build: bool, force: bool, dry_run: bool):
     dabl_meta = load_dabl_meta()
 
     dit_filename = package_dit_filename(dabl_meta)
@@ -26,7 +26,7 @@ def subcommand_main(build: bool, force: bool, dry_run: bool):
     if not os.path.exists(dit_filename):
         if build:
             LOG.info(f'Release artifact not found, building now: {dit_filename}')
-            subcommand_build_main(False, False)
+            subcommand_build_main(is_integration, False, False)
         else:
             die(f'Release artifact not found (pass --build to build): {dit_filename}')
 
@@ -106,6 +106,10 @@ def setup(sp):
     sp.add_argument('--build',
                     help='Build the DIT file to be released, if necessary',
                     dest='build', action='store_true', default=False)
+
+    sp.add_argument('--integration', help='Build DIT file with integration support. (with --build)'
+                    'DA approval requried to deploy.',
+                    dest='is_integration', action='store_true', default=False)
 
     sp.add_argument('--force',
                     help='Forcibly overwrite target release and tag if they exist',

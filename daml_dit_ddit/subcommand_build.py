@@ -153,12 +153,16 @@ def subcommand_main(is_integration: bool, force: bool, rebuild_dar: bool):
 
     LOG.info('Enriching output DIT file...')
     with ZipFile(tmp_filename, 'a') as pexfile:
-        for pkg_filename in os.listdir('pkg'):
-            resource_files.add(pkg_filename)
-            file_bytes = Path(f'pkg/{pkg_filename}').read_bytes()
 
-            LOG.info(f'  Adding package file: {pkg_filename}, len=={len(file_bytes)}')
-            pexfile.writestr(pkg_filename, file_bytes)
+        if os.path.isdir('pkg'):
+            for pkg_filename in os.listdir('pkg'):
+                resource_files.add(pkg_filename)
+                file_bytes = Path(f'pkg/{pkg_filename}').read_bytes()
+
+                LOG.info(f'  Adding package file: {pkg_filename}, len=={len(file_bytes)}')
+                pexfile.writestr(pkg_filename, file_bytes)
+        else:
+            LOG.info('No pkg directory found, not adding any resources.')
 
         if dar_filename:
             pexfile.write(dar_filename)

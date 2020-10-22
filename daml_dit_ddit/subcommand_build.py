@@ -1,6 +1,7 @@
 import os
 import subprocess
 from dataclasses import replace
+from typing import Sequence
 from datetime import date
 
 from pathlib import Path
@@ -121,7 +122,12 @@ def build_dar(base_filename: str, rebuild_dar: bool) -> 'Optional[str]':
     return dar_filename
 
 
-def subcommand_main(is_integration: bool, force: bool, rebuild_dar: bool):
+def subcommand_main(
+        is_integration: bool,
+        force: bool,
+        rebuild_dar: bool,
+        add_subdeployments: 'Sequence[str]'):
+
     dabl_meta = load_dabl_meta()
 
     integration_types = package_meta_integration_types(dabl_meta)
@@ -137,6 +143,10 @@ def subcommand_main(is_integration: bool, force: bool, rebuild_dar: bool):
         os.remove(tmp_filename)
 
     check_target_file(dit_filename, force)
+
+    for sd_filename in add_subdeployments:
+        if not os.path.exists(sd_filename):
+            die(f'Additional subdeployment file not found to be added: {sd_filename}')
 
     LOG.info(f'Building {dit_filename}')
 
@@ -154,7 +164,12 @@ def subcommand_main(is_integration: bool, force: bool, rebuild_dar: bool):
         die('daml-meta.yaml specifies integration types and therefore '
             'must be built with --integration')
 
-    subdeployments = (dabl_meta.subdeployments or [])
+    subdeployments = [
+        *(dabl_meta.subdeployments or []),
+        *[os.path.basename(sd_filename)
+          for sd_filename
+          in add_subdeployments]
+    ]
 
     resource_files = set()
 
@@ -170,6 +185,12 @@ def subcommand_main(is_integration: bool, force: bool, rebuild_dar: bool):
                 pexfile.writestr(pkg_filename, file_bytes)
         else:
             LOG.info('No pkg directory found, not adding any resources.')
+
+        for sd_filename in add_subdeployments:
+            arcname=os.path.basename(sd_filename)
+            resource_files.add(arcname)
+            LOG.info(f'  Adding package file: {sd_filename} as {arcname}')
+            pexfile.write(sd_filename, arcname=arcname)
 
         if dar_filename:
             pexfile.write(dar_filename)
@@ -193,6 +214,9 @@ def subcommand_main(is_integration: bool, force: bool, rebuild_dar: bool):
 
 
 def setup(sp):
+    sp.add_argument('--subdeployment', help='Add one or more subdeployments, by name, to the DIT file.',
+                    nargs='+', dest='add_subdeployments', default=[])
+
     sp.add_argument('--force', help='Forcibly overwrite target files if they exist',
                     dest='force', action='store_true', default=False)
 

@@ -25,8 +25,9 @@ from .log import LOG
 from .common import \
     load_dabl_meta, \
     package_meta_yaml, \
+    package_dit_basename, \
     package_dit_filename, \
-    show_integration_types, \
+    package_meta_integration_types, \
     die
 
 
@@ -123,7 +124,9 @@ def build_dar(base_filename: str, rebuild_dar: bool) -> 'Optional[str]':
 def subcommand_main(is_integration: bool, force: bool, rebuild_dar: bool):
     dabl_meta = load_dabl_meta()
 
-    base_filename = f'{dabl_meta.catalog.name}-{dabl_meta.catalog.version}'
+    integration_types = package_meta_integration_types(dabl_meta)
+
+    base_filename = package_dit_basename(dabl_meta)
 
     tmp_filename = f'{base_filename}.tmp'
 
@@ -140,10 +143,14 @@ def subcommand_main(is_integration: bool, force: bool, rebuild_dar: bool):
     dar_filename = build_dar(base_filename, rebuild_dar)
 
     if is_integration:
+        if not len(integration_types):
+            die('daml-meta.yaml does not specify integration types and therefore '
+                'cannot be built with --integration')
+
         LOG.warn('Building as integration. Authorization will be required to install in DABL.')
         build_pex(tmp_filename)
 
-    elif dabl_meta.integration_types and len(dabl_meta.integration_types):
+    elif len(integration_types):
         die('daml-meta.yaml specifies integration types and therefore '
             'must be built with --integration')
 

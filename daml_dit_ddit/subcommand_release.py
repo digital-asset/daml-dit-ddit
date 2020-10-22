@@ -12,23 +12,16 @@ from .common import \
     load_dabl_meta, \
     package_dit_filename
 
-from .subcommand_build import \
-    subcommand_main as subcommand_build_main
-
 from .log import LOG
 
 
-def subcommand_main(build: bool, force: bool, dry_run: bool):
+def subcommand_main(force: bool, dry_run: bool):
     dabl_meta = load_dabl_meta()
 
     dit_filename = package_dit_filename(dabl_meta)
 
     if not os.path.exists(dit_filename):
-        if build:
-            LOG.info(f'Release artifact not found, building now: {dit_filename}')
-            subcommand_build_main(False, False)
-        else:
-            die(f'Release artifact not found (pass --build to build): {dit_filename}')
+        die(f'Release artifact not found (run \'ddit build\' to build): {dit_filename}')
 
     github_token = os.environ.get('GITHUB_TOKEN')
 
@@ -102,10 +95,6 @@ def setup(sp):
     sp.add_argument('--dry-run',
                     help='Do not create tags or releases.',
                     dest='dry_run', action='store_true', default=False)
-
-    sp.add_argument('--build',
-                    help='Build the DIT file to be released, if necessary',
-                    dest='build', action='store_true', default=False)
 
     sp.add_argument('--force',
                     help='Forcibly overwrite target release and tag if they exist',

@@ -44,8 +44,14 @@ def package_meta_integration_types(
     return {itype.id: itype for itype in package_itypes}
 
 
+def package_dit_basename(dabl_meta: 'PackageMetadata'):
+    return f'{dabl_meta.catalog.name}-{dabl_meta.catalog.version}'
+
+
 def package_dit_filename(dabl_meta: 'PackageMetadata'):
-    return f'{dabl_meta.catalog.name}-{dabl_meta.catalog.version}.dit'
+    basename = package_dit_basename(dabl_meta)
+
+    return f'{basename}.dit'
 
 
 def show_integration_types(dabl_meta: 'PackageMetadata'):

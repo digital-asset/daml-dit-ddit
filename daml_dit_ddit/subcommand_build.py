@@ -1,6 +1,7 @@
 import os
 import subprocess
 from dataclasses import replace
+from typing import Sequence
 from datetime import date
 
 from pathlib import Path
@@ -25,8 +26,9 @@ from .log import LOG
 from .common import \
     load_dabl_meta, \
     package_meta_yaml, \
+    package_dit_basename, \
     package_dit_filename, \
-    show_integration_types, \
+    package_meta_integration_types, \
     die
 
 
@@ -120,10 +122,17 @@ def build_dar(base_filename: str, rebuild_dar: bool) -> 'Optional[str]':
     return dar_filename
 
 
-def subcommand_main(force: bool, rebuild_dar: bool):
+def subcommand_main(
+        is_integration: bool,
+        force: bool,
+        rebuild_dar: bool,
+        add_subdeployments: 'Sequence[str]'):
+
     dabl_meta = load_dabl_meta()
 
-    base_filename = f'{dabl_meta.catalog.name}-{dabl_meta.catalog.version}'
+    integration_types = package_meta_integration_types(dabl_meta)
+
+    base_filename = package_dit_basename(dabl_meta)
 
     tmp_filename = f'{base_filename}.tmp'
 
@@ -135,23 +144,53 @@ def subcommand_main(force: bool, rebuild_dar: bool):
 
     check_target_file(dit_filename, force)
 
+    for sd_filename in add_subdeployments:
+        if not os.path.exists(sd_filename):
+            die(f'Additional subdeployment file not found to be added: {sd_filename}')
+
     LOG.info(f'Building {dit_filename}')
 
     dar_filename = build_dar(base_filename, rebuild_dar)
-    build_pex(tmp_filename)
 
-    subdeployments = (dabl_meta.subdeployments or [])
+    if is_integration:
+        if not len(integration_types):
+            die('daml-meta.yaml does not specify integration types and therefore '
+                'cannot be built with --integration')
+
+        LOG.warn('Building as integration. Authorization will be required to install in DABL.')
+        build_pex(tmp_filename)
+
+    elif len(integration_types):
+        die('daml-meta.yaml specifies integration types and therefore '
+            'must be built with --integration')
+
+    subdeployments = [
+        *(dabl_meta.subdeployments or []),
+        *[os.path.basename(sd_filename)
+          for sd_filename
+          in add_subdeployments]
+    ]
 
     resource_files = set()
 
     LOG.info('Enriching output DIT file...')
     with ZipFile(tmp_filename, 'a') as pexfile:
-        for pkg_filename in os.listdir('pkg'):
-            resource_files.add(pkg_filename)
-            file_bytes = Path(f'pkg/{pkg_filename}').read_bytes()
 
-            LOG.info(f'  Adding package file: {pkg_filename}, len=={len(file_bytes)}')
-            pexfile.writestr(pkg_filename, file_bytes)
+        if os.path.isdir('pkg'):
+            for pkg_filename in os.listdir('pkg'):
+                resource_files.add(pkg_filename)
+                file_bytes = Path(f'pkg/{pkg_filename}').read_bytes()
+
+                LOG.info(f'  Adding package file: {pkg_filename}, len=={len(file_bytes)}')
+                pexfile.writestr(pkg_filename, file_bytes)
+        else:
+            LOG.info('No pkg directory found, not adding any resources.')
+
+        for sd_filename in add_subdeployments:
+            arcname=os.path.basename(sd_filename)
+            resource_files.add(arcname)
+            LOG.info(f'  Adding package file: {sd_filename} as {arcname}')
+            pexfile.write(sd_filename, arcname=arcname)
 
         if dar_filename:
             pexfile.write(dar_filename)
@@ -175,8 +214,15 @@ def subcommand_main(force: bool, rebuild_dar: bool):
 
 
 def setup(sp):
+    sp.add_argument('--subdeployment', help='Add one or more subdeployments, by name, to the DIT file.',
+                    nargs='+', dest='add_subdeployments', default=[])
+
     sp.add_argument('--force', help='Forcibly overwrite target files if they exist',
                     dest='force', action='store_true', default=False)
+
+    sp.add_argument('--integration', help='Build DIT file with integration support. '
+                    'DA approval requried to deploy.',
+                    dest='is_integration', action='store_true', default=False)
 
     sp.add_argument('--rebuild-dar', help='Rebuild and overwrite the DAR if it already exists',
                     dest='rebuild_dar', action='store_true', default=False)

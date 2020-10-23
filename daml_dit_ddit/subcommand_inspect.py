@@ -17,12 +17,14 @@ from .common import \
 def show_subdeployments(dabl_meta: 'PackageMetadata', files):
     subdeployments = dabl_meta.subdeployments
 
-    if len(subdeployments) > 0:
+    if len(subdeployments or []) > 0:
         print('\nSubdeployments:')
 
         for sd in subdeployments:
             status = "MISSING" if (sd not in files) else "ok"
             print(f'   {sd} ({status})')
+    else:
+        print('\nSubdeployments: None')
 
 
 def subcommand_main(dit_filename: str):

@@ -126,6 +126,7 @@ def build_dar(base_filename: str, rebuild_dar: bool) -> 'Optional[str]':
 def subcommand_main(
         is_integration: bool,
         force: bool,
+        skip_dar_build: bool,
         rebuild_dar: bool,
         add_subdeployments: 'Sequence[str]'):
 
@@ -151,7 +152,11 @@ def subcommand_main(
 
     LOG.info(f'Building {dit_filename}')
 
-    dar_filename = build_dar(base_filename, rebuild_dar)
+    if skip_dar_build:
+        LOG.info('Skipping DAR build (--skip-dar-build specified)')
+        dar_filename = None
+    else:
+        dar_filename = build_dar(base_filename, rebuild_dar)
 
     if is_integration:
         if not len(integration_types):
@@ -227,6 +232,10 @@ def setup(sp):
 
     sp.add_argument('--rebuild-dar', help='Rebuild and overwrite the DAR if it already exists',
                     dest='rebuild_dar', action='store_true', default=False)
+
+    sp.add_argument('--skip-dar-build',
+                    help='Skip the DAR build, even if there is a daml.yaml.',
+                    dest='skip_dar_build', action='store_true', default=False)
 
     return subcommand_main
 

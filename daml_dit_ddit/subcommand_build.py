@@ -100,6 +100,7 @@ def build_pex(pex_filename: str):
 
 def build_dar(base_filename: str, rebuild_dar: bool) -> 'Optional[str]':
     if not os.path.exists('daml.yaml'):
+        LOG.info(f'No daml.yaml found, skipping DAR build.')
         return None
 
     dar_filename = f'{base_filename}.dar'
@@ -198,11 +199,11 @@ def subcommand_main(
 
             subdeployments=[*subdeployments, dar_filename]
 
-            dabl_meta = replace(
-                dabl_meta,
-                catalog=replace(dabl_meta.catalog,
-                                release_date=date.today()),
-                subdeployments=subdeployments)
+        dabl_meta = replace(
+            dabl_meta,
+            catalog=replace(dabl_meta.catalog,
+                            release_date=date.today()),
+            subdeployments=subdeployments)
 
         pexfile.writestr(DABL_META_NAME, package_meta_yaml(dabl_meta))
 

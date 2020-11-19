@@ -216,6 +216,11 @@ def subcommand_main(
         if subdeployment not in resource_files:
             die(f'Subdeployment {subdeployment} not available in DIT file resources: {resource_files}')
 
+    icon_file = dabl_meta.catalog.icon_file
+
+    if icon_file and icon_file not in resource_files:
+        die(f'Icon {icon_file} not available in DIT file resources: {resource_files}')
+
     os.rename(tmp_filename, dit_filename)
 
 

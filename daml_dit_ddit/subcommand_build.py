@@ -1,5 +1,6 @@
 import os
 import subprocess
+import yaml
 from dataclasses import replace
 from typing import Sequence
 from datetime import date
@@ -97,13 +98,30 @@ def build_pex(pex_filename: str):
         bytecode_compile=True,
         deterministic_timestamp=True)
 
+DAML_YAML_NAME = 'daml.yaml'
+
+def daml_yaml_version():
+    with open(DAML_YAML_NAME, "r") as f:
+        daml_yaml = yaml.safe_load(f.read())
+
+        LOG.debug(f'{DAML_YAML_NAME}: %r', daml_yaml)
+
+        if 'version' in daml_yaml:
+            version = daml_yaml['version']
+            LOG.info(f'DAML model version from {DAML_YAML_NAME}: %r', version)
+            return version
+        else:
+            die(f'No model version specified in {DAML_YAML_NAME}')
+
 
 def build_dar(base_filename: str, rebuild_dar: bool) -> 'Optional[str]':
-    if not os.path.exists('daml.yaml'):
-        LOG.info(f'No daml.yaml found, skipping DAR build.')
+    if not os.path.exists(DAML_YAML_NAME):
+        LOG.info(f'No {DAML_YAML_NAME} found, skipping DAR build.')
         return None
 
-    dar_filename = f'{base_filename}.dar'
+    dar_version = daml_yaml_version()
+
+    dar_filename = f'{base_filename}-{dar_version}.dar'
 
     if os.path.exists(dar_filename):
         if rebuild_dar:
@@ -156,7 +174,7 @@ def subcommand_main(
         LOG.info('Skipping DAR build (--skip-dar-build specified)')
         dar_filename = None
     else:
-        dar_filename = build_dar(base_filename, rebuild_dar)
+        dar_filename = build_dar(dabl_meta.catalog.name, rebuild_dar)
 
     if is_integration:
         if not len(integration_types):
@@ -239,7 +257,7 @@ def setup(sp):
                     dest='rebuild_dar', action='store_true', default=False)
 
     sp.add_argument('--skip-dar-build',
-                    help='Skip the DAR build, even if there is a daml.yaml.',
+                    help=f'Skip the DAR build, even if there is a {DAML_YAML_NAME}.',
                     dest='skip_dar_build', action='store_true', default=False)
 
     return subcommand_main

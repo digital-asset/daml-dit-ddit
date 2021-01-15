@@ -17,3 +17,6 @@ def setup_default_logging(**overrides):
 
 
 LOG = logging.getLogger('ddit')
+
+def is_verbose():
+    return logging.root.level <= logging.DEBUG

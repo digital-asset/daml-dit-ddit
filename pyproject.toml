@@ -8,7 +8,7 @@ repository = "https://github.com/digital-asset/daml-dit-ddit"
 keywords = ["daml", "blockchain", "dlt", "distributed ledger", "digital asset"]
 
 [tool.poetry.dependencies]
-python = "3.8.*"
+python = ">=3.8"
 dacite = "*"
 pyyaml = "^5"
 pex = "2.1.18"

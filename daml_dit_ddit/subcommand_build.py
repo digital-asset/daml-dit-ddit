@@ -14,6 +14,9 @@ from pex.pex import PEX
 from pex.pex_builder import \
     PEXBuilder
 
+from pex.inherit_path import \
+    InheritPath
+
 from pex.resolver import \
     Unsatisfiable, \
     parsed_platform, \
@@ -44,7 +47,7 @@ def check_target_file(filename: str, force: bool):
 def build_pex(pex_filename: str):
     pex_builder = PEXBuilder()
 
-    pex_builder.info.inherit_path = True
+    pex_builder.info.inherit_path = InheritPath.PREFER
 
     pex_builder.set_entry_point('daml_dit_if.main')
     pex_builder.set_shebang('/usr/bin/env python3')
@@ -64,10 +67,15 @@ def build_pex(pex_filename: str):
 
         for resolved_dist in resolveds:
             LOG.debug(
-                "  %s -> %s", resolved_dist.requirement, resolved_dist.distribution)
+                "  %s -> %s",
+                resolved_dist.direct_requirement,
+                resolved_dist.distribution)
 
             pex_builder.add_distribution(resolved_dist.distribution)
-            pex_builder.add_requirement(resolved_dist.requirement)
+            if resolved_dist.direct_requirement:
+                LOG.info("  Adding requirement: %s", resolved_dist.direct_requirement)
+                pex_builder.add_requirement(resolved_dist.direct_requirement)
+
 
     except Unsatisfiable as e:
         die(f'Unsatifiable dependency error: {e}')

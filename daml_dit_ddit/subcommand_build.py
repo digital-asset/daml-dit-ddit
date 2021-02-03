@@ -45,7 +45,7 @@ def check_target_file(filename: str, force: bool):
 
 
 def build_pex(pex_filename: str):
-    pex_builder = PEXBuilder()
+    pex_builder = PEXBuilder(include_tools=True)
 
     pex_builder.info.inherit_path = InheritPath.PREFER
 
@@ -101,6 +101,9 @@ def build_pex(pex_filename: str):
         verify_entry_point=True)
 
     LOG.info('Building intermediate PEX file...')
+
+    LOG.debug('PEX info: %r', pex_builder.info)
+
     pex_builder.build(
         pex_filename,
         bytecode_compile=True,

@@ -1,125 +1,106 @@
-daml-dit-api
+daml-dit-ddit
 ====
 
-API definitions for integrations and other sorts of packages to be
-hosted by DABL. This contains the following:
+`ddit` is a command line tool, written in Python, to streamline and
+automate the process of building composite artifacts for
+[project:DABL](https://www.projectdabl.com/). DABL stores composite
+artifacts in [DIT files](https://github.com/digital-asset/daml-dit-api),
+which aggregate metadata alongside multiple deployable entities in a
+single file. DABL uses these to store application deployments as well
+as integrations.
 
-* [The definition for the package metadata format](daml_dit_api/package_metadata.py)
-* [The call API for integration bots](daml_dit_api/integration_api.py)
-* [A framework for simplifying the implementation of integrations](daml_dit_api/main)
+# Installing `ddit`
 
-# Package Metadata
+`ddit` is a Python executable built using [PEX](https://github.com/pantsbuild/pex),
+and distributed via the [PyPI](https://pypi.org/project/daml-dit-ddit/) package index.
 
-At their core, DIT files are [ZIP archives](https://en.wikipedia.org/wiki/Zip_(file_format))
-that follow a specific set of conventions regarding their content. The
-most important of these conventions is the presence of a YAML metadata
-file at the root of the archive and named `dabl-meta.yaml`. This
-metadata file contains catalog information describing the contents of
-the DIT, as well as any packaging details needed to successfully
-deploy a DIT file into DABL. An example of a deployment instruction is
-a _subdeployment_. A subdeployment instructs DABL to deploy a specific
-subfile within the DIT file. A DIT file that contains an embedded DAR
-file could use a subdeployment to ensure that the embedded DAR file is
-deployed to the ledger when the DIT is deployed. In this way, a DIT
-file composed of multiple artifacts (DARs, Bots, UI's, etc.) can be
-constructed to deploy a set of artifacts to a single ledger in a
-single action.
+Given a Python installation of version 3.7 or later, `ddit` can be installed using `pip3`
 
-# Integrations
-
-Integrations are a special case of DIT file that are augmented with
-the ability to run as an executable within a DABL cluster. This is
-done by packaging Python [DAZL bot](https://github.com/DACH-NY/dazl)
-code into an [executable ZIP](https://docs.python.org/3/library/zipapp.html)
-using [PEX](https://github.com/pantsbuild/pex) and augmenting tha
-resulting file with the metadata and other resources needed to make it
-a correctly formed DIT file.
-
-Logically speaking, DABL integrations are DAZL bots packaged with
-information needed to fit them into the DABL runtime and user
-interface. The major functional contrast between a DABL integration
-and a Python Bot is that the integration has the external network
-access needed to connect to an outside system and the Python Bot does
-not. Due to the security implications of running within DABL with
-external network access, integrations can only be deployed with the
-approval of DA staff.
-
-## Developing Integrations
-
-The easiest way to develop an integration for DABL is to use the
-[framework library](daml_dit_api/main) bundled within this API
-package. The integration framework presents a Python API closely
-related to the DAZL bot api and ensures that integrations follow the
-conventions required to integrate into DABL. The framework parses
-ledger connection arguments, translates configuration metadata into a
-domain object specific to the integration, and exposes the appropriate
-health check endpoints required to populate the DABL integration user
-interface.
-
-_Unless you know exactly what you are doing and why you are doing it,
-use the framework._
-
-### Locally Running an integration DIT.
-
-Because they can be directly executed by a Python interpreter,
-integration DIT files can be run directly on a development machine
-like any other standalone executable. By convention, integrations
-accept a number of environment variables that specify key paramaters.
-Integrations built with the framework use defaults for these variables
-that connect to a default locally configured sandbox instance.
-
-Available variables include the following:
-
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `DABL_HEALTH_PORT` | 8089 | Port for Health/Status HTTP endpoint |
-| `DABL_INTEGRATION_METADATA_PATH` | 'int_args.yaml' | Path to local metadata file |
-| `DABL_INTEGRATION_TYPE_ID` | | Type ID for the specific integration within the DIT to run |
-| `DABL_LEDGER_ID` | 'cloudbox' | Ledger ID for local ledger |
-| `DABL_LEDGER_URL` | `http://localhost:6865` | Address of local ledger gRPC API |
-
-Several of these are specifically of note for local development scenarios:
-
-* `DABL_INTEGRATION_INTEGRATION_ID` - This is the ID of the
-  integration that would normally come from DABL itself. This needs to
-  be provided, but the specific value doesn't matter.
-* `DABL_INTEGRATION_TYPE_ID` - DIT files can contain definitions for
-  multiple types of integrations. Each integration type is described
-  in a `IntegrationTypeInfo` block in the `dabl-meta.yaml` file and
-  identified with an `id`. This ID needs to be specified with
-  `DABL_INTEGRATION_TYPE_ID`, to launch the appropriate integration
-  type within the DIT.
-* `DABL_INTEGRATION_METADATA_PATH` - Integration configuration
-  parameters specified to the integration from the console are
-  communicated to the integration at runtime via a metadata file. By
-  convention, this metadata file is named `int_args.yaml` and must be
-  located in the working directory where the integration is being run.
-* `DABL_HEALTH_PORT` - Each integration exposes health and status over
-  a `healthz` HTTP resource. <http://localhost:8089/healthz> is the
-  default, and the port can be adjusted, if necessary. (This will be
-  the case in scenarios where multiple integrations are being run
-  locally.) Inbound webhook resources defined with webhook handlers
-  will also be exposed on this HTTP endpoint.
-
-### Integration Configuration Arguments
-
-Integrations accept their runtime configuration parameters through the
-metadata block of a configuration YAML file. This file is distinct
-from `dabl_meta.yaml`, usually named `int_args.yaml` and by default
-should be located in the working directory of the integration. A file
-and path can be explicitly specified using the
-`DABL_INTEGRATION_METADATA_PATH` environment variable.
-
-The format of the file is a single string/string map located under the
-`metadata` key. The keys of the metadata map are the are defined by
-the `field`s specified for the integration in the DIT file's
-`dabl-meta.yaml` and the values are the the configuration paramaters
-for the integration.
-
-```yaml
-"metadata":
-  "interval": "1"
-  "runAs": "ledger-party-f18044e5-6157-47bd-8ba6-7641b54b87ff"
-  "targetTemplate": "9b0a268f4d5c93831e6b3b6d675a5416a8e94015c9bde7263b6ab450e10ae11b:Utility.Sequence:Sequence"
-  "templateChoice": "Sequence_Next"
+```sh
+$ pip3 install daml-dit-ddit
 ```
+
+Once installed, verify `ddit` by launching it without arguments:
+
+```sh
+$ ddit
+usage: ddit [-h] [--verbose] {build,ditversion,genargs,inspect,release,show,targetname} ...
+
+positional arguments:
+  {build,ditversion,genargs,inspect,release,show,targetname}
+                        subcommand
+    build               Build a DIT file.
+    ditversion          Print the current version in dabl-meta.yaml
+    genargs             Write a template integration argfile to stdout
+    inspect             Inspect the contents of a DIT file.
+    release             Tag and release the current DIT file.
+    show                Verify and print the current metadata file.
+    targetname          Print the build target filename to stdout
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --verbose             Turn on additional logging.
+2021-02-03T19:24:31-0500 [ERROR] (ddit) Fatal Error: Subcommand missing.
+```
+
+# Using `ddit`
+
+`ddit` is used to build two major categories of DAR files:
+applications and integrations. Applications are simple composites of
+one or more distinct sub-artifacts. This is useful to deploy, for
+example, a DAML model alongside the Python Bots and UI code composing
+the rest of the application. When building these sorts of DIT files,
+`ddit` primarily serves to assemble packages out of components built
+by other build processes. Put another way, `ddit` won't build your
+user interface itself, it has to be built before `ddit` can package
+it into a DIT file.
+
+For examples of what this looks like in practice, please see one of
+several sample applications available through DABL:
+
+* <https://github.com/digital-asset/dablchat>
+* <https://github.com/digital-asset/dablchess>
+* <https://github.com/OpenSaaSame/board>
+
+These are all built using Makefiles that delegate to `ddit` to manage
+packaging and release. Make runs the overall build process using `ddit
+ditversion` and `ddit targetname` to parse out version and name
+information from `dabl-meta.yaml`, `ddit build` to package the DIT
+file, and `ddit release` to release that DIT file to Github.
+
+## Specific support for DAML
+
+`ddit` is integrated into the DAML ecosystem and will, by default,
+treat the the root build directory as a DAML project directory if
+there is a `daml.yaml` file in the root. As part of `ddit build`,
+`ddit` will recursively invoke the
+[DAML SDK's](https://docs.daml.com/getting-started/installation.html)
+`daml build` command to build the DAML model used by the DIT file.
+If it is necessary to take more fine grained control over the model
+build process, this can be disabled by specifying `--skip-dar-build`.
+
+Note also that `ddit` will not rebuild a DAR file that already exists
+unless `--force` is specified. This is intended to make it easier to
+keep a given DAR file stable across multiple releases of the same DIT
+file. If the model is stable, the DAR itself should also be stable.
+
+# Building integrations
+
+Integration DIT files differ from applications in that they contain
+code that runs within the DABL cluster that has access to both a
+ledger and the external network. Because of these elevated access
+rights, specific permissions are required to deploy these DIT files to
+DABL, and these DIT files must be built using the `--integration` flag
+passed to `ddit build`.
+
+When running in integration mode, The DIT file build directory is
+considered to be a Python project. Python dependencies are specified
+in `requirements.txt`, Python source code is under `src`, and the
+project is built using an instance of [PEX](https://github.com/pantsbuild/pex)
+that is internal to `ddit` itself.
+
+Integration DIT files are also allowed (and required) to have an
+`integration_types` section in their `dabl-meta.yaml` specifying the
+integrations supported by the DIT file. This is enforced by `ddit`:
+`--integration` mode is required to build DIT files that specify
+integration types.

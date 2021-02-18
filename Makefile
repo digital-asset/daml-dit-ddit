@@ -24,6 +24,10 @@ clean:
 .PHONY: deps
 deps: $(poetry_install_marker)
 
+.PHONY: setversion
+setversion:
+	gsed -i -E "s/__version__ = '[0-9]+.[0-9]+.[0-9]+'/__version__ = '${version}'/" daml_dit_ddit/__init__.py
+
 .PHONY: publish
 publish: build
 	poetry publish
@@ -42,7 +46,7 @@ version:
 ## Test Targets
 
 .PHONY: typecheck
-typecheck:
+typecheck: setversion
 	poetry run python3 -m mypy -p daml_dit_ddit
 
 .PHONY: test
@@ -58,10 +62,9 @@ $(daml_dit_ddit_bdist): $(poetry_build_marker)
 
 $(daml_dit_ddit_sdist): $(poetry_build_marker)
 
-$(poetry_build_marker): $(build_dir) pyproject.toml $(SRC_FILES)
+$(poetry_build_marker): $(build_dir) pyproject.toml $(SRC_FILES) $(daml_dit_ddit_version)
 	poetry build
 	touch $@
 
 $(poetry_install_marker): $(build_dir) poetry.lock
 	touch $@
-

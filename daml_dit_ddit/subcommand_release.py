@@ -10,7 +10,8 @@ from github.GithubException import UnknownObjectException
 from .common import \
     die, \
     load_dabl_meta, \
-    package_dit_filename
+    package_dit_filename, \
+    with_catalog
 
 from .log import LOG, is_verbose
 
@@ -35,7 +36,7 @@ def connect_to_github() -> 'Github':
 
         username = user.name
 
-        user_scopes = set(github.oauth_scopes)
+        user_scopes = set() if github.oauth_scopes is None else set(github.oauth_scopes)
 
         LOG.info('Connected as user: %r (scopes: %r)', username, user_scopes)
 
@@ -88,10 +89,10 @@ def subcommand_main(force: bool, dry_run: bool):
     if repo.is_dirty():
         die('Uncommitted changes in repository')
 
-    version = dabl_meta.catalog.version
-    tag_name = f'{dabl_meta.catalog.name}-v{version}'
+    catalog = with_catalog(dabl_meta)
+    tag_name = f'{catalog.name}-v{catalog.version}'
 
-    LOG.info(f'Releasing version {version} as {tag_name}.')
+    LOG.info(f'Releasing version {catalog.version} as {tag_name}.')
 
     if dry_run:
         LOG.info('Dry run. Tags and releases not created.')

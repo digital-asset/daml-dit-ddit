@@ -1,4 +1,6 @@
 import sys
+from typing import Dict, NoReturn
+from daml_dit_api.package_metadata import CatalogInfo
 import yaml
 
 from dacite import from_dict
@@ -7,12 +9,13 @@ from dataclasses import asdict
 
 from daml_dit_api import \
     DABL_META_NAME, \
+    IntegrationTypeInfo, \
     PackageMetadata
 
 from .log import LOG
 
 
-def die(message: str):
+def die(message: str) -> 'NoReturn':
     LOG.error(f'Fatal Error: {message}')
     sys.exit(9)
 
@@ -29,7 +32,7 @@ def accept_dabl_meta(data: bytes) -> 'PackageMetadata':
 def load_dabl_meta() -> 'PackageMetadata':
     try:
         with open(DABL_META_NAME, "r") as f:
-            return accept_dabl_meta(f.read())
+            return accept_dabl_meta(f.read().encode())
     except FileNotFoundError:
         die(f'Project metadata file not found: {DABL_META_NAME}')
 
@@ -43,12 +46,17 @@ def package_meta_integration_types(
 
     return {itype.id: itype for itype in package_itypes}
 
+def with_catalog(dabl_meta: 'PackageMetadata') -> 'CatalogInfo':
+    if dabl_meta.catalog is None:
+        die(f'Missing catalog information in {DABL_META_NAME}')
+    else:
+        return dabl_meta.catalog
 
-def package_dit_basename(dabl_meta: 'PackageMetadata'):
-    return f'{dabl_meta.catalog.name}-{dabl_meta.catalog.version}'
+def package_dit_basename(dabl_meta: 'PackageMetadata') -> str:
+    catalog = with_catalog(dabl_meta)
+    return f'{catalog.name}-{catalog.version}'
 
-
-def package_dit_filename(dabl_meta: 'PackageMetadata'):
+def package_dit_filename(dabl_meta: 'PackageMetadata') -> str:
     basename = package_dit_basename(dabl_meta)
 
     return f'{basename}.dit'

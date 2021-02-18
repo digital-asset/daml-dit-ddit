@@ -1,13 +1,13 @@
-import os
-import yaml
-from hashlib import sha256
-
 from dataclasses import asdict
-
+from hashlib import sha256
+import os
+from typing import Dict
+import yaml
 from zipfile import ZipFile
 
 from daml_dit_api import \
-    DABL_META_NAME
+    DABL_META_NAME, \
+    PackageMetadata
 
 from .common import \
     die, \
@@ -22,7 +22,7 @@ def artifact_hash(artifact_bytes: bytes) -> str:
 def show_subdeployments(dabl_meta: 'PackageMetadata', contents):
     subdeployments = dabl_meta.subdeployments
 
-    if len(subdeployments or []) > 0:
+    if subdeployments is not None and len(subdeployments) > 0:
         print('\nSubdeployments:')
 
         for sd in subdeployments:
@@ -40,7 +40,7 @@ def subcommand_main(dit_filename: str):
     if not os.path.exists(dit_filename):
         die(f'DIT file not found: {dit_filename}')
 
-    contents = {}
+    contents : Dict[str, bytes] = {}
 
     with ZipFile(dit_filename, 'a') as ditfile:
         filenames = set(ditfile.namelist())

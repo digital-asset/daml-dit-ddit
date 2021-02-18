@@ -2,7 +2,7 @@ import os
 import subprocess
 import yaml
 from dataclasses import replace
-from typing import Sequence
+from typing import Optional, Sequence
 from datetime import date
 
 from pathlib import Path
@@ -33,7 +33,7 @@ from .common import \
     package_dit_basename, \
     package_dit_filename, \
     package_meta_integration_types, \
-    die
+    die, with_catalog
 
 
 def check_target_file(filename: str, force: bool):
@@ -185,7 +185,8 @@ def subcommand_main(
         LOG.info('Skipping DAR build (--skip-dar-build specified)')
         dar_filename = None
     else:
-        dar_filename = build_dar(dabl_meta.catalog.name, rebuild_dar)
+        catalog = with_catalog(dabl_meta)
+        dar_filename = build_dar(catalog.name, rebuild_dar)
 
     if is_integration:
         if not len(integration_types):
@@ -245,7 +246,7 @@ def subcommand_main(
         if subdeployment not in resource_files:
             die(f'Subdeployment {subdeployment} not available in DIT file resources: {resource_files}')
 
-    icon_file = dabl_meta.catalog.icon_file
+    icon_file = None if dabl_meta.catalog is None else dabl_meta.catalog.icon_file
 
     if icon_file and icon_file not in resource_files:
         die(f'Icon {icon_file} not available in DIT file resources: {resource_files}')

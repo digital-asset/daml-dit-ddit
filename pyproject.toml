@@ -11,7 +11,7 @@ keywords = ["daml", "blockchain", "dlt", "distributed ledger", "digital asset"]
 python = ">=3.7, <3.10"
 dacite = "*"
 pyyaml = "^5"
-pex = "2.1.28"
+pex = "2.1.30"
 daml-dit-api = "0.3.3"
 GitPython = "3.1.12"
 PyGithub = "1.54.1"

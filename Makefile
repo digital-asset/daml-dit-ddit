@@ -8,6 +8,8 @@ build_dir := build/.dir
 poetry_build_marker := build/.poetry.build
 poetry_install_marker := build/.poetry.install
 
+SRC_FILES=$(shell find daml_dit_ddit -type f)
+
 ## General Targets
 
 .PHONY: all
@@ -52,13 +54,14 @@ $(build_dir):
 	@mkdir -p build
 	@touch $@
 
-$(poetry_build_marker): $(build_dir) pyproject.toml $(dazl_files)
+$(daml_dit_ddit_bdist): $(poetry_build_marker)
+
+$(daml_dit_ddit_sdist): $(poetry_build_marker)
+
+$(poetry_build_marker): $(build_dir) pyproject.toml $(SRC_FILES)
 	poetry build
 	touch $@
 
 $(poetry_install_marker): $(build_dir) poetry.lock
 	touch $@
 
-$(daml_dit_ddit_bdist): $(poetry_build_marker)
-
-$(daml_dit_ddit_sdist): $(poetry_build_marker)

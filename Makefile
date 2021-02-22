@@ -8,9 +8,9 @@ build_dir := build/.dir
 poetry_build_marker := build/.poetry.build
 poetry_install_marker := build/.poetry.install
 
-####################################################################################################
-## GENERAL TARGETS                                                                                ##
-####################################################################################################
+SRC_FILES=$(shell find daml_dit_ddit -type f)
+
+## General Targets
 
 .PHONY: all
 all: clean test
@@ -24,24 +24,22 @@ clean:
 .PHONY: deps
 deps: $(poetry_install_marker)
 
-.PHONY: build
-build: package
-
-.PHONY: package
-package: $(daml_dit_ddit_bdist) $(daml_dit_ddit_sdist)
-
 .PHONY: publish
-publish: package
+publish: build
 	poetry publish
+
+.PHONY: install
+install: build
+	pip3 install --force $(daml_dit_ddit_bdist)
+
+.PHONY: build
+build: typecheck $(daml_dit_ddit_bdist) $(daml_dit_ddit_sdist)
 
 .PHONY: version
 version:
 	@echo $(version)
 
-
-####################################################################################################
-## TEST TARGETS                                                                                   ##
-####################################################################################################
+## Test Targets
 
 .PHONY: typecheck
 typecheck:
@@ -50,22 +48,20 @@ typecheck:
 .PHONY: test
 test: typecheck
 
-
-####################################################################################################
-## file targets                                                                                   ##
-####################################################################################################
+## File Targets
 
 $(build_dir):
 	@mkdir -p build
 	@touch $@
 
-$(poetry_build_marker): $(build_dir) pyproject.toml $(dazl_files)
+$(daml_dit_ddit_bdist): $(poetry_build_marker)
+
+$(daml_dit_ddit_sdist): $(poetry_build_marker)
+
+$(poetry_build_marker): $(build_dir) pyproject.toml $(SRC_FILES)
 	poetry build
 	touch $@
 
 $(poetry_install_marker): $(build_dir) poetry.lock
 	touch $@
 
-$(daml_dit_ddit_bdist): $(poetry_build_marker)
-
-$(daml_dit_ddit_sdist): $(poetry_build_marker)

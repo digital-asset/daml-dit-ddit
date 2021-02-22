@@ -8,9 +8,7 @@ build_dir := build/.dir
 poetry_build_marker := build/.poetry.build
 poetry_install_marker := build/.poetry.install
 
-####################################################################################################
-## GENERAL TARGETS                                                                                ##
-####################################################################################################
+## General Targets
 
 .PHONY: all
 all: clean test
@@ -24,24 +22,22 @@ clean:
 .PHONY: deps
 deps: $(poetry_install_marker)
 
-.PHONY: build
-build: package
-
-.PHONY: package
-package: $(daml_dit_ddit_bdist) $(daml_dit_ddit_sdist)
-
 .PHONY: publish
-publish: package
+publish: build
 	poetry publish
+
+.PHONY: install
+install: build
+	pip3 install --force $(daml_dit_ddit_bdist)
+
+.PHONY: build
+build: typecheck $(daml_dit_ddit_bdist) $(daml_dit_ddit_sdist)
 
 .PHONY: version
 version:
 	@echo $(version)
 
-
-####################################################################################################
-## TEST TARGETS                                                                                   ##
-####################################################################################################
+## Test Targets
 
 .PHONY: typecheck
 typecheck:
@@ -50,10 +46,7 @@ typecheck:
 .PHONY: test
 test: typecheck
 
-
-####################################################################################################
-## file targets                                                                                   ##
-####################################################################################################
+## File Targets
 
 $(build_dir):
 	@mkdir -p build

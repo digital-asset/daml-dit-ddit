@@ -74,14 +74,14 @@ def build_pex(pex_filename: str, local_only: bool):
             platforms=platforms)
 
         for resolved_dist in resolveds:
-            LOG.debug(
-                "  %s -> %s",
-                resolved_dist.direct_requirement,
-                resolved_dist.distribution)
+            LOG.debug("req: %s", resolved_dist.distribution)
+            LOG.debug("      -> target: %s", resolved_dist.target)
 
             pex_builder.add_distribution(resolved_dist.distribution)
             if resolved_dist.direct_requirement:
-                LOG.info("  Adding requirement: %s", resolved_dist.direct_requirement)
+                LOG.info("direct_req: %s", resolved_dist.direct_requirement)
+                LOG.debug("      -> target: %s", resolved_dist.target)
+
                 pex_builder.add_requirement(resolved_dist.direct_requirement)
 
 

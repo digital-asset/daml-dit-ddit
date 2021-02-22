@@ -44,7 +44,7 @@ def check_target_file(filename: str, force: bool):
             die(f'Target file already exists: {filename}')
 
 
-def build_pex(pex_filename: str):
+def build_pex(pex_filename: str, local_only: bool):
     pex_builder = PEXBuilder(include_tools=True)
 
     pex_builder.info.inherit_path = InheritPath.PREFER
@@ -52,10 +52,18 @@ def build_pex(pex_filename: str):
     pex_builder.set_entry_point('daml_dit_if.main')
     pex_builder.set_shebang('/usr/bin/env python3')
 
+
     platforms = [
-        parsed_platform('current'),
-        parsed_platform('manylinux2014_x86_64-cp-38-cp38')
+        parsed_platform('current')
     ]
+
+    if local_only:
+        LOG.warn('Local-only build. THIS DIT WILL NOT RUN IN DABL.')
+    else:
+        platforms = [
+            *platforms,
+            parsed_platform('manylinux2014_x86_64-cp-38-cp38')
+        ]
 
     try:
         LOG.info('Resolving dependencies...')
@@ -157,6 +165,7 @@ def subcommand_main(
         force: bool,
         skip_dar_build: bool,
         rebuild_dar: bool,
+        local_only: bool,
         add_subdeployments: 'Sequence[str]'):
 
     dabl_meta = load_dabl_meta()
@@ -194,11 +203,16 @@ def subcommand_main(
                 'cannot be built with --integration')
 
         LOG.warn('Building as integration. Authorization will be required to install in DABL.')
-        build_pex(tmp_filename)
+        build_pex(tmp_filename, local_only)
 
-    elif len(integration_types):
-        die('daml-meta.yaml specifies integration types and therefore '
-            'must be built with --integration')
+    else:
+        if len(integration_types):
+            die('daml-meta.yaml specifies integration types and therefore '
+                'must be built with --integration')
+
+        if local_only:
+            die('--local-only may just be used on builds with --integration '
+                'specified.')
 
     subdeployments = [
         *(dabl_meta.subdeployments or []),
@@ -255,22 +269,26 @@ def subcommand_main(
 
 
 def setup(sp):
-    sp.add_argument('--subdeployment', help='Add one or more subdeployments, by name, to the DIT file.',
-                    nargs='+', dest='add_subdeployments', default=[])
-
-    sp.add_argument('--force', help='Forcibly overwrite target files if they exist',
-                    dest='force', action='store_true', default=False)
 
     sp.add_argument('--integration', help='Build DIT file with integration support. '
                     'DA approval requried to deploy.',
                     dest='is_integration', action='store_true', default=False)
 
-    sp.add_argument('--rebuild-dar', help='Rebuild and overwrite the DAR if it already exists',
-                    dest='rebuild_dar', action='store_true', default=False)
+    sp.add_argument('--force', help='Forcibly overwrite target files if they exist',
+                    dest='force', action='store_true', default=False)
 
     sp.add_argument('--skip-dar-build',
                     help=f'Skip the DAR build, even if there is a {DAML_YAML_NAME}.',
                     dest='skip_dar_build', action='store_true', default=False)
+
+    sp.add_argument('--rebuild-dar', help='Rebuild and overwrite the DAR if it already exists',
+                    dest='rebuild_dar', action='store_true', default=False)
+
+    sp.add_argument('--local-only', help='Build a local-only DIT that will not run in cluster.',
+                    dest='local_only', action='store_true', default=False)
+
+    sp.add_argument('--subdeployment', help='Add one or more subdeployments, by name, to the DIT file.',
+                    nargs='+', dest='add_subdeployments', default=[])
 
     return subcommand_main
 

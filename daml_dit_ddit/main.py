@@ -1,6 +1,8 @@
-import argparse
+from . import __version__
 
+import argparse
 import logging
+
 
 from .log import setup_default_logging, LOG
 
@@ -20,6 +22,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--verbose', help='Turn on additional logging.',
                         dest='verbose', action='store_true', default=False)
+    parser.add_argument('--version', action='version', version=__version__)
 
     subcommands={}
     subparsers=parser.add_subparsers(dest='subcommand_name', help='subcommand')

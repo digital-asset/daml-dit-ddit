@@ -7,6 +7,8 @@ from dacite import from_dict
 
 from dataclasses import asdict
 
+from hashlib import sha256
+
 from daml_dit_api import \
     DABL_META_NAME, \
     IntegrationTypeInfo, \
@@ -15,9 +17,14 @@ from daml_dit_api import \
 from .log import LOG
 
 
+
 def die(message: str) -> 'NoReturn':
     LOG.error(f'Fatal Error: {message}')
     sys.exit(9)
+
+
+def artifact_hash(artifact_bytes: bytes) -> str:
+    return sha256(artifact_bytes).hexdigest()
 
 
 def accept_dabl_meta(data: bytes) -> 'PackageMetadata':
@@ -85,3 +92,9 @@ def package_meta_yaml(dabl_meta: 'PackageMetadata'):
         asdict(dabl_meta),
         default_flow_style=True,
         default_style='"')
+
+def read_binary_file(filename: str) -> bytes:
+    with open(filename, mode='rb') as file:
+        file_contents = file.read()
+
+    return file_contents

@@ -28,12 +28,15 @@ from daml_dit_api import \
 from .log import LOG
 
 from .common import \
+    die, \
+    artifact_hash, \
     load_dabl_meta, \
     package_meta_yaml, \
     package_dit_basename, \
     package_dit_filename, \
     package_meta_integration_types, \
-    die, with_catalog
+    read_binary_file, \
+    with_catalog
 
 
 def check_target_file(filename: str, force: bool):
@@ -49,7 +52,7 @@ def build_pex(pex_filename: str, local_only: bool):
 
     pex_builder.info.inherit_path = InheritPath.PREFER
 
-    pex_builder.set_entry_point('daml_dit_if.main')
+    pex_builder.set_entry_point('daml_dit_if.main:main')
     pex_builder.set_shebang('/usr/bin/env python3')
 
 
@@ -266,6 +269,10 @@ def subcommand_main(
         die(f'Icon {icon_file} not available in DIT file resources: {resource_files}')
 
     os.rename(tmp_filename, dit_filename)
+
+    dit_file_contents = read_binary_file(dit_filename)
+
+    LOG.info('Artifact hash: %r', artifact_hash(dit_file_contents))
 
 
 def setup(sp):

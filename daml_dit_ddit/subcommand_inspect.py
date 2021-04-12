@@ -1,6 +1,7 @@
-from dataclasses import asdict
-from hashlib import sha256
+import io
 import os
+
+from dataclasses import asdict
 from typing import Dict
 import yaml
 from zipfile import ZipFile
@@ -11,12 +12,10 @@ from daml_dit_api import \
 
 from .common import \
     die, \
+    artifact_hash, \
     accept_dabl_meta, \
+    read_binary_file, \
     show_package_summary
-
-
-def artifact_hash(artifact_bytes: bytes) -> str:
-    return sha256(artifact_bytes).hexdigest()
 
 
 def show_subdeployments(dabl_meta: 'PackageMetadata', contents):
@@ -42,7 +41,12 @@ def subcommand_main(dit_filename: str):
 
     contents : Dict[str, bytes] = {}
 
-    with ZipFile(dit_filename, 'a') as ditfile:
+    dit_file_contents = read_binary_file(dit_filename)
+
+    print('Artifact hash: ', artifact_hash(dit_file_contents))
+    print()
+
+    with ZipFile(io.BytesIO(dit_file_contents), 'r') as ditfile:
         filenames = set(ditfile.namelist())
 
         for zi in ditfile.infolist():

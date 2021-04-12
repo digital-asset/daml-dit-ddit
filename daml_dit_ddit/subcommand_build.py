@@ -52,7 +52,7 @@ def build_pex(pex_filename: str, local_only: bool):
 
     pex_builder.info.inherit_path = InheritPath.PREFER
 
-    pex_builder.set_entry_point('daml_dit_if.main')
+    pex_builder.set_entry_point('daml_dit_if.main:main')
     pex_builder.set_shebang('/usr/bin/env python3')
 
 

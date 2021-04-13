@@ -1,6 +1,8 @@
 import sys
-from typing import Dict, NoReturn
-from daml_dit_api.package_metadata import CatalogInfo
+from typing import Dict, Optional, NoReturn
+from daml_dit_api.package_metadata import \
+    CatalogInfo, \
+    DamlModelInfo
 import yaml
 
 from dacite import from_dict
@@ -78,14 +80,24 @@ def show_integration_types(dabl_meta: 'PackageMetadata'):
         for itype in itypes.values():
             print(f'   {itype.id} - {itype.name}')
 
+def show_daml_model(daml_model: 'Optional[DamlModelInfo]'):
+    print()
+
+    if daml_model:
+        print(f'DAML Model: ')
+        print(f'   Name/Version: {daml_model.name}:{daml_model.version}')
+        print(f'   Package ID: {daml_model.main_package_id}')
+    else:
+        print('No DAML model information present')
 
 def show_package_summary(dabl_meta: 'PackageMetadata'):
     print('Package Catalog:')
     for (k, v) in asdict(dabl_meta.catalog).items():
         print(f'   {k} : {v}')
 
-    show_integration_types(dabl_meta)
+    show_daml_model(dabl_meta.daml_model)
 
+    show_integration_types(dabl_meta)
 
 def package_meta_yaml(dabl_meta: 'PackageMetadata'):
     return yaml.dump(

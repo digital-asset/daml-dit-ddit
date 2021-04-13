@@ -1,4 +1,5 @@
 import os
+import json
 import subprocess
 import yaml
 from dataclasses import replace
@@ -23,7 +24,8 @@ from pex.resolver import \
     resolve_multi
 
 from daml_dit_api import \
-    DABL_META_NAME
+    DABL_META_NAME, \
+    DamlModelInfo
 
 from .log import LOG
 
@@ -136,12 +138,10 @@ def daml_yaml_version():
             die(f'No model version specified in {DAML_YAML_NAME}')
 
 
-def build_dar(base_filename: str, rebuild_dar: bool) -> 'Optional[str]':
+def build_dar(base_filename: str, dar_version: str, rebuild_dar: bool) -> 'Optional[str]':
     if not os.path.exists(DAML_YAML_NAME):
         LOG.info(f'No {DAML_YAML_NAME} found, skipping DAR build.')
         return None
-
-    dar_version = daml_yaml_version()
 
     dar_filename = f'{base_filename}-{dar_version}.dar'
 
@@ -161,6 +161,28 @@ def build_dar(base_filename: str, rebuild_dar: bool) -> 'Optional[str]':
         die(f'Error building DAR file, rc={completed.returncode}')
 
     return dar_filename
+
+
+def get_dar_main_package_id(dar_filename: str) -> str:
+
+    completed = subprocess.run(
+        ['daml', 'damlc', 'inspect-dar', '--json', dar_filename],
+        capture_output=True, text=True)
+
+    if completed.returncode != 0:
+        die(f'Error inspecting DAR for package ID, rc={completed.returncode} error output:\n{completed.stderr}')
+
+    dar_inspect_text = completed.stdout
+
+    try:
+        dar_inspect_results = json.loads(dar_inspect_text)
+
+        main_package_id = dar_inspect_results['main_package_id']
+    except:
+        LOG.exception('Error parsing DAR metadata for main package ID, Text:\n%r', dar_inspect_text)
+        die('Error parsing DAR metadata for main package ID')
+
+    return main_package_id
 
 
 def subcommand_main(
@@ -193,12 +215,27 @@ def subcommand_main(
 
     LOG.info(f'Building {dit_filename}')
 
+    daml_model_info = None
+
     if skip_dar_build:
         LOG.info('Skipping DAR build (--skip-dar-build specified)')
         dar_filename = None
     else:
         catalog = with_catalog(dabl_meta)
-        dar_filename = build_dar(catalog.name, rebuild_dar)
+
+        dar_version = daml_yaml_version()
+
+        dar_filename = build_dar(catalog.name, dar_version, rebuild_dar)
+
+        if dar_filename:
+            main_package_id = get_dar_main_package_id(dar_filename)
+
+            daml_model_info = DamlModelInfo(
+                name = catalog.name,
+                version=dar_version,
+                main_package_id=main_package_id)
+
+            LOG.info('Main package ID: %r', main_package_id)
 
     if is_integration:
         if not len(integration_types):
@@ -255,6 +292,7 @@ def subcommand_main(
             dabl_meta,
             catalog=replace(dabl_meta.catalog,
                             release_date=date.today()),
+            daml_model=daml_model_info,
             subdeployments=subdeployments)
 
         pexfile.writestr(DABL_META_NAME, package_meta_yaml(dabl_meta))

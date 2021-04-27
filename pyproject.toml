@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "daml-dit-ddit"
-version = "0.4.9"
-description = "DABL DIT File Tool"
+version = "0.5.0"
+description = "Daml Hub DIT File Tool"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
 readme = "README.md"
 repository = "https://github.com/digital-asset/daml-dit-ddit"

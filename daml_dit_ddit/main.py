@@ -2,6 +2,8 @@ import argparse
 
 import logging
 
+from typing import Union, List
+
 from .log import setup_default_logging, LOG
 
 from .common import die
@@ -24,10 +26,12 @@ def main():
     subcommands={}
     subparsers=parser.add_subparsers(dest='subcommand_name', help='subcommand')
 
-    def install_subcommand(name: str, help: str, setup_fn):
-        cmd_fn = setup_fn(subparsers.add_parser(name, help=help))
+    def install_subcommand(name_or_names: 'Union[str, List[str]]', help: str, setup_fn):
+        names = name_or_names if isinstance(name_or_names, list) else [ name_or_names ]
 
-        subcommands[name] = cmd_fn
+        for name in names:
+            cmd_fn = setup_fn(subparsers.add_parser(name, help=help))
+            subcommands[name] = cmd_fn
 
     install_subcommand('build', 'Build a DIT file.',
                        setup_subcommand_build)
@@ -41,7 +45,7 @@ def main():
     install_subcommand('inspect', 'Inspect the contents of a DIT file.',
                        setup_subcommand_inspect)
 
-    install_subcommand('release', 'Tag and release the current DIT file.',
+    install_subcommand(['publish', 'release'], 'Tag and release the current DIT file.',
                        setup_subcommand_release)
 
     install_subcommand('show', 'Verify and print the current metadata file.',

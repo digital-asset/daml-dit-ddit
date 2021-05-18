@@ -63,7 +63,7 @@ def build_pex(pex_filename: str, local_only: bool):
     ]
 
     if local_only:
-        LOG.warn('Local-only build. THIS DIT WILL NOT RUN IN DABL.')
+        LOG.warn('Local-only build. THIS DIT WILL NOT RUN IN DAML HUB.')
     else:
         platforms = [
             *platforms,
@@ -132,7 +132,7 @@ def daml_yaml_version():
 
         if 'version' in daml_yaml:
             version = daml_yaml['version']
-            LOG.info(f'DAML model version from {DAML_YAML_NAME}: %r', version)
+            LOG.info(f'Daml model version from {DAML_YAML_NAME}: %r', version)
             return version
         else:
             die(f'No model version specified in {DAML_YAML_NAME}')
@@ -242,7 +242,7 @@ def subcommand_main(
             die('daml-meta.yaml does not specify integration types and therefore '
                 'cannot be built with --integration')
 
-        LOG.warn('Building as integration. Authorization will be required to install in DABL.')
+        LOG.warn('Building as integration. Authorization will be required to install in Daml Hub.')
         build_pex(tmp_filename, local_only)
 
     else:
@@ -336,4 +336,3 @@ def setup(sp):
                     nargs='+', dest='add_subdeployments', default=[])
 
     return subcommand_main
-

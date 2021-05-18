@@ -84,11 +84,11 @@ def show_daml_model(daml_model: 'Optional[DamlModelInfo]'):
     print()
 
     if daml_model:
-        print(f'DAML Model: ')
+        print(f'Daml Model: ')
         print(f'   Name/Version: {daml_model.name}:{daml_model.version}')
         print(f'   Package ID: {daml_model.main_package_id}')
     else:
-        print('No DAML model information present')
+        print('No Daml model information present')
 
 def show_package_summary(dabl_meta: 'PackageMetadata'):
     print('Package Catalog:')

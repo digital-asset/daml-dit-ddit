@@ -1,12 +1,11 @@
-daml-dit-ddit
-====
+# daml-dit-ddit
 
 `ddit` is a command line tool, written in Python, to streamline and
 automate the process of building composite artifacts for
-[project:DABL](https://www.projectdabl.com/). DABL stores composite
+[Daml Hub](https://www.projectdabl.com/). Daml Hub stores composite
 artifacts in [DIT files](https://github.com/digital-asset/daml-dit-api),
 which aggregate metadata alongside multiple deployable entities in a
-single file. DABL uses these to store application deployments as well
+single file. Daml Hub uses these to store application deployments as well
 as integrations.
 
 # Installing `ddit`
@@ -48,7 +47,7 @@ optional arguments:
 `ddit` is used to build two major categories of DAR files:
 applications and integrations. Applications are simple composites of
 one or more distinct sub-artifacts. This is useful to deploy, for
-example, a DAML model alongside the Python Bots and UI code composing
+example, a Daml model alongside the Python Bots and UI code composing
 the rest of the application. When building these sorts of DIT files,
 `ddit` primarily serves to assemble packages out of components built
 by other build processes. Put another way, `ddit` won't build your
@@ -56,26 +55,25 @@ user interface itself, it has to be built before `ddit` can package
 it into a DIT file.
 
 For examples of what this looks like in practice, please see one of
-several sample applications available through DABL:
+several sample applications available through Daml Hub:
 
-* <https://github.com/digital-asset/dablchat>
-* <https://github.com/digital-asset/dablchess>
-* <https://github.com/OpenSaaSame/board>
+- <https://github.com/digital-asset/dablchat>
+- <https://github.com/digital-asset/dablchess>
+- <https://github.com/OpenSaaSame/board>
 
 These are all built using Makefiles that delegate to `ddit` to manage
-packaging and release. Make runs the overall build process using `ddit
-ditversion` and `ddit targetname` to parse out version and name
+packaging and release. Make runs the overall build process using `ddit ditversion` and `ddit targetname` to parse out version and name
 information from `dabl-meta.yaml`, `ddit build` to package the DIT
 file, and `ddit release` to release that DIT file to Github.
 
-## Specific support for DAML
+## Specific support for Daml
 
-`ddit` is integrated into the DAML ecosystem and will, by default,
-treat the the root build directory as a DAML project directory if
+`ddit` is integrated into the Daml ecosystem and will, by default,
+treat the the root build directory as a Daml project directory if
 there is a `daml.yaml` file in the root. As part of `ddit build`,
 `ddit` will recursively invoke the
-[DAML SDK's](https://docs.daml.com/getting-started/installation.html)
-`daml build` command to build the DAML model used by the DIT file.
+[Daml SDK's](https://docs.daml.com/getting-started/installation.html)
+`daml build` command to build the Daml model used by the DIT file.
 If it is necessary to take more fine grained control over the model
 build process, this can be disabled by specifying `--skip-dar-build`.
 
@@ -87,10 +85,10 @@ file. If the model is stable, the DAR itself should also be stable.
 # Building integrations
 
 Integration DIT files differ from applications in that they contain
-code that runs within the DABL cluster that has access to both a
+code that runs within the Daml Hub cluster that has access to both a
 ledger and the external network. Because of these elevated access
 rights, specific permissions are required to deploy these DIT files to
-DABL, and these DIT files must be built using the `--integration` flag
+Daml Hub, and these DIT files must be built using the `--integration` flag
 passed to `ddit build`.
 
 When running in integration mode, The DIT file build directory is

@@ -54,9 +54,9 @@ def write_pex(pex: 'ZipFile', filepath: str, arcname: 'Optional[str]' = None, fi
         LOG.warn(f'File {filename} exists in archive -- skipping.')
     else:
         if filebytes:
-            pex.writestr(filename, filebytes)
+            pex.writestr(filepath, filebytes)
         else:
-            pex.write(filename, arcname=arcname)
+            pex.write(filepath, arcname=arcname)
 
 def build_pex(pex_filename: str, local_only: bool):
     pex_builder = PEXBuilder(include_tools=True)

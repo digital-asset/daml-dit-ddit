@@ -48,20 +48,17 @@ def check_target_file(filename: str, force: bool):
         else:
             die(f'Target file already exists: {filename}')
 
-def file_in_zip(zip: 'ZipFile', name: str):
-    if name in zip.namelist():
-        LOG.warn(f'  File {name} exists in archive -- skipping.')
-        return True
-    else:
-        return False
-
 def pex_writestr(pex: 'ZipFile', filepath: str, filebytes: bytes):
-    if not file_in_zip(pex, filepath):
+    if filepath in pex.namelist():
+        LOG.warn(f'  File {filepath} exists in archive -- skipping.')
+    else:
         pex.writestr(filepath, filebytes)
 
 def pex_write(pex: 'ZipFile', filepath: str, arcname: 'Optional[str]' = None):
     filename = filepath.split("/")[-1]
-    if not file_in_zip(pex, filename):
+    if filename in pex.namelist():
+        LOG.warn(f'  File {filename} exists in archive -- skipping.')
+    else:
         pex.write(filepath, arcname=arcname)
 
 def build_pex(pex_filename: str, local_only: bool):

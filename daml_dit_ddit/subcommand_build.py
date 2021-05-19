@@ -48,6 +48,18 @@ def check_target_file(filename: str, force: bool):
         else:
             die(f'Target file already exists: {filename}')
 
+def pex_writestr(pex: 'ZipFile', filepath: str, filebytes: bytes):
+    if filepath in pex.namelist():
+        LOG.warn(f'  File {filepath} exists in archive -- skipping.')
+    else:
+        pex.writestr(filepath, filebytes)
+
+def pex_write(pex: 'ZipFile', filepath: str, arcname: 'Optional[str]' = None):
+    filename = filepath.split("/")[-1]
+    if filename in pex.namelist():
+        LOG.warn(f'  File {filename} exists in archive -- skipping.')
+    else:
+        pex.write(filepath, arcname=arcname)
 
 def build_pex(pex_filename: str, local_only: bool):
     pex_builder = PEXBuilder(include_tools=True)
@@ -272,7 +284,7 @@ def subcommand_main(
                 file_bytes = Path(f'pkg/{pkg_filename}').read_bytes()
 
                 LOG.info(f'  Adding package file: {pkg_filename}, len=={len(file_bytes)}')
-                pexfile.writestr(pkg_filename, file_bytes)
+                pex_writestr(pexfile, pkg_filename, file_bytes)
         else:
             LOG.info('No pkg directory found, not adding any resources.')
 
@@ -280,10 +292,10 @@ def subcommand_main(
             arcname=os.path.basename(sd_filename)
             resource_files.add(arcname)
             LOG.info(f'  Adding package file: {sd_filename} as {arcname}')
-            pexfile.write(sd_filename, arcname=arcname)
+            pex_write(pexfile, sd_filename, arcname=arcname)
 
         if dar_filename:
-            pexfile.write(dar_filename)
+            pex_write(pexfile, dar_filename)
             resource_files.add(dar_filename)
 
             subdeployments=[*subdeployments, dar_filename]
@@ -295,7 +307,7 @@ def subcommand_main(
             daml_model=daml_model_info,
             subdeployments=subdeployments)
 
-        pexfile.writestr(DABL_META_NAME, package_meta_yaml(dabl_meta))
+        pex_writestr(pexfile, DABL_META_NAME, filebytes=package_meta_yaml(dabl_meta))
 
     for subdeployment in subdeployments:
         if subdeployment not in resource_files:

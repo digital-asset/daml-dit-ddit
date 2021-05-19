@@ -2,7 +2,7 @@
 
 `ddit` is a command line tool, written in Python, to streamline and
 automate the process of building composite artifacts for
-[Daml Hub](https://www.projectdabl.com/). Daml Hub stores composite
+[Daml Hub](https://hub.daml.com/). Daml Hub stores composite
 artifacts in [DIT files](https://github.com/digital-asset/daml-dit-api),
 which aggregate metadata alongside multiple deployable entities in a
 single file. Daml Hub uses these to store application deployments as well

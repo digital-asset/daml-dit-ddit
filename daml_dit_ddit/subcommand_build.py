@@ -48,15 +48,21 @@ def check_target_file(filename: str, force: bool):
         else:
             die(f'Target file already exists: {filename}')
 
-def write_pex(pex: 'ZipFile', filepath: str, arcname: 'Optional[str]' = None, filebytes: 'Optional[bytes]' = None):
-    filename = filepath.split("/")[-1]
-    if filename in pex.namelist():
-        LOG.warn(f'File {filename} exists in archive -- skipping.')
+def file_in_zip(zip: 'ZipFile', name: str):
+    if name in zip.namelist():
+        LOG.warn(f'  File {name} exists in archive -- skipping.')
+        return True
     else:
-        if filebytes:
-            pex.writestr(filepath, filebytes)
-        else:
-            pex.write(filepath, arcname=arcname)
+        return False
+
+def pex_writestr(pex: 'ZipFile', filepath: str, filebytes: bytes):
+    if not file_in_zip(pex, filepath):
+        pex.writestr(filepath, filebytes)
+
+def pex_write(pex: 'ZipFile', filepath: str, arcname: 'Optional[str]' = None):
+    filename = filepath.split("/")[-1]
+    if not file_in_zip(pex, filename):
+        pex.write(filepath, arcname=arcname)
 
 def build_pex(pex_filename: str, local_only: bool):
     pex_builder = PEXBuilder(include_tools=True)
@@ -281,7 +287,7 @@ def subcommand_main(
                 file_bytes = Path(f'pkg/{pkg_filename}').read_bytes()
 
                 LOG.info(f'  Adding package file: {pkg_filename}, len=={len(file_bytes)}')
-                write_pex(pexfile, pkg_filename, filebytes=file_bytes)
+                pex_writestr(pexfile, pkg_filename, file_bytes)
         else:
             LOG.info('No pkg directory found, not adding any resources.')
 
@@ -289,10 +295,10 @@ def subcommand_main(
             arcname=os.path.basename(sd_filename)
             resource_files.add(arcname)
             LOG.info(f'  Adding package file: {sd_filename} as {arcname}')
-            write_pex(pexfile, sd_filename, arcname=arcname)
+            pex_write(pexfile, sd_filename, arcname=arcname)
 
         if dar_filename:
-            write_pex(pexfile, dar_filename)
+            pex_write(pexfile, dar_filename)
             resource_files.add(dar_filename)
 
             subdeployments=[*subdeployments, dar_filename]
@@ -304,7 +310,7 @@ def subcommand_main(
             daml_model=daml_model_info,
             subdeployments=subdeployments)
 
-        write_pex(pexfile, DABL_META_NAME, filebytes=package_meta_yaml(dabl_meta))
+        pex_writestr(pexfile, DABL_META_NAME, filebytes=package_meta_yaml(dabl_meta))
 
     for subdeployment in subdeployments:
         if subdeployment not in resource_files:

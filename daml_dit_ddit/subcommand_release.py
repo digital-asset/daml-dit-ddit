@@ -94,6 +94,11 @@ def subcommand_main(force: bool, dry_run: bool):
 
     LOG.info(f'Releasing version {catalog.version} as {tag_name}.')
 
+    prerelease = "experimental" in catalog.tags
+
+    if prerelease:
+        LOG.info('Found the "experimental" tag. Creating a prerelease.')
+
     if dry_run:
         LOG.info('Dry run. Tags and releases not created.')
         return
@@ -122,7 +127,7 @@ def subcommand_main(force: bool, dry_run: bool):
 
     LOG.info('Creating new release for tag: %r', tag_name)
     github_release = github_repo.create_git_release(
-        tag_name, tag_name, f'DIT file release (ddit) - {tag_name}')
+        tag_name, tag_name, f'DIT file release (ddit) - {tag_name}', prerelease=prerelease)
 
     LOG.info('Uploading release asset: %r', dit_filename)
     github_release.upload_asset(dit_filename, dit_filename)

@@ -67,7 +67,11 @@ def check_experimental(dabl_meta: 'PackageMetadata'):
             f" inside the tags list of {DABL_META_NAME} instead."))
 
 def get_experimental(catalog: 'CatalogInfo'):
-    return (TAG_EXPERIMENTAL in catalog.tags) or (catalog.experimental)
+    experimental = (TAG_EXPERIMENTAL in catalog.tags) or (catalog.experimental)
+    if experimental is None:
+        return False
+    else:
+        return experimental
 
 def with_catalog(dabl_meta: 'PackageMetadata') -> 'CatalogInfo':
     if dabl_meta.catalog is None:

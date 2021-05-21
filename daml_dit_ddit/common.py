@@ -18,7 +18,7 @@ from daml_dit_api import \
 
 from .log import LOG
 
-
+TAG_EXPERIMENTAL = 'experimental'
 
 def die(message: str) -> 'NoReturn':
     LOG.error(f'Fatal Error: {message}')
@@ -41,7 +41,10 @@ def accept_dabl_meta(data: bytes) -> 'PackageMetadata':
 def load_dabl_meta() -> 'PackageMetadata':
     try:
         with open(DABL_META_NAME, "r") as f:
-            return accept_dabl_meta(f.read().encode())
+            dabl_meta = accept_dabl_meta(f.read().encode())
+            check_experimental(dabl_meta)
+
+            return dabl_meta
     except FileNotFoundError:
         die(f'Project metadata file not found: {DABL_META_NAME}')
 
@@ -54,6 +57,17 @@ def package_meta_integration_types(
                       or [])
 
     return {itype.id: itype for itype in package_itypes}
+
+def check_experimental(dabl_meta: 'PackageMetadata'):
+    catalog = with_catalog(dabl_meta)
+    if catalog.experimental is not None:
+        LOG.warn((
+            f"The '{TAG_EXPERIMENTAL}' flag is deprecated, and support may be"
+            f" dropped in a future release. Please specify '{TAG_EXPERIMENTAL}'"
+            f" inside the tags list of {DABL_META_NAME} instead."))
+
+def get_experimental(catalog: 'CatalogInfo'):
+    return (TAG_EXPERIMENTAL in catalog.tags) or (catalog.experimental)
 
 def with_catalog(dabl_meta: 'PackageMetadata') -> 'CatalogInfo':
     if dabl_meta.catalog is None:

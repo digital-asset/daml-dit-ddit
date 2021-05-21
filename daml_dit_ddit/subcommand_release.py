@@ -1,5 +1,4 @@
 import os
-import yaml
 
 from git import Repo
 from git.exc import InvalidGitRepositoryError
@@ -9,6 +8,7 @@ from github.GithubException import UnknownObjectException
 
 from .common import \
     die, \
+    get_experimental, \
     load_dabl_meta, \
     package_dit_filename, \
     with_catalog
@@ -94,7 +94,7 @@ def subcommand_main(force: bool, dry_run: bool):
 
     LOG.info(f'Releasing version {catalog.version} as {tag_name}.')
 
-    prerelease = "experimental" in catalog.tags
+    prerelease = get_experimental(catalog)
 
     if prerelease:
         LOG.info('Found the "experimental" tag. Creating a prerelease.')

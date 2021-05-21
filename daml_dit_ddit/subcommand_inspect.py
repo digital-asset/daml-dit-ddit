@@ -1,9 +1,7 @@
 import io
 import os
 
-from dataclasses import asdict
 from typing import Dict
-import yaml
 from zipfile import ZipFile
 
 from daml_dit_api import \
@@ -15,6 +13,7 @@ from .common import \
     artifact_hash, \
     accept_dabl_meta, \
     read_binary_file, \
+    check_experimental, \
     show_package_summary
 
 
@@ -54,6 +53,7 @@ def subcommand_main(dit_filename: str):
 
     try:
         dabl_meta = accept_dabl_meta(contents[DABL_META_NAME])
+        check_experimental(dabl_meta)
 
         show_package_summary(dabl_meta)
         show_subdeployments(dabl_meta, contents)

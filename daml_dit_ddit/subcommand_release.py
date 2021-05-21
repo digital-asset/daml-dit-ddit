@@ -7,6 +7,7 @@ from github import Github
 from github.GithubException import UnknownObjectException
 
 from .common import \
+    TAG_EXPERIMENTAL, \
     die, \
     get_experimental, \
     load_dabl_meta, \
@@ -97,7 +98,7 @@ def subcommand_main(force: bool, dry_run: bool):
     prerelease = get_experimental(catalog)
 
     if prerelease:
-        LOG.info('Found the "experimental" tag. Creating a prerelease.')
+        LOG.info(f'Found the "{TAG_EXPERIMENTAL}" tag. Creating a prerelease.')
 
     if dry_run:
         LOG.info('Dry run. Tags and releases not created.')

@@ -18,7 +18,7 @@ from daml_dit_api import \
 
 from .log import LOG
 
-EXPERIMENTAL_NAME = 'experimental'
+TAG_EXPERIMENTAL = 'experimental'
 
 def die(message: str) -> 'NoReturn':
     LOG.error(f'Fatal Error: {message}')
@@ -62,12 +62,12 @@ def check_experimental(dabl_meta: 'PackageMetadata'):
     catalog = with_catalog(dabl_meta)
     if catalog.experimental is not None:
         LOG.warn((
-            f"The '{EXPERIMENTAL_NAME}' flag is deprecated, and support may be"
-            f" dropped in a future release. Please specify '{EXPERIMENTAL_NAME}'"
+            f"The '{TAG_EXPERIMENTAL}' flag is deprecated, and support may be"
+            f" dropped in a future release. Please specify '{TAG_EXPERIMENTAL}'"
             f" inside the tags list of {DABL_META_NAME} instead."))
 
 def get_experimental(catalog: 'CatalogInfo'):
-    return (EXPERIMENTAL_NAME in catalog.tags) or (catalog.experimental)
+    return (TAG_EXPERIMENTAL in catalog.tags) or (catalog.experimental)
 
 def with_catalog(dabl_meta: 'PackageMetadata') -> 'CatalogInfo':
     if dabl_meta.catalog is None:

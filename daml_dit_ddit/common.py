@@ -14,11 +14,11 @@ from hashlib import sha256
 from daml_dit_api import \
     DABL_META_NAME, \
     IntegrationTypeInfo, \
-    PackageMetadata
+    PackageMetadata, \
+    TAG_EXPERIMENTAL
 
 from .log import LOG
 
-TAG_EXPERIMENTAL = 'experimental'
 
 def die(message: str) -> 'NoReturn':
     LOG.error(f'Fatal Error: {message}')

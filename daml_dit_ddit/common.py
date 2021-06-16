@@ -15,7 +15,8 @@ from daml_dit_api import \
     DABL_META_NAME, \
     IntegrationTypeInfo, \
     PackageMetadata, \
-    TAG_EXPERIMENTAL
+    TAG_EXPERIMENTAL, \
+    normalize_package_metadata
 
 from .log import LOG
 
@@ -38,13 +39,36 @@ def accept_dabl_meta(data: bytes) -> 'PackageMetadata':
         die(f'Error loading project metadata file: {DABL_META_NAME}')
 
 
+def with_catalog(dabl_meta: 'PackageMetadata') -> 'CatalogInfo':
+    if dabl_meta.catalog is None:
+        die(f'Missing catalog information in {DABL_META_NAME}')
+    else:
+        return dabl_meta.catalog
+
+
+def _check_deprecated(dabl_meta: 'PackageMetadata'):
+    catalog = with_catalog(dabl_meta)
+
+    if catalog.experimental is not None:
+        LOG.warn((
+            f"The 'experimental' metadata field is deprecated, and support may be"
+            f" dropped in a future release. Please specify '{TAG_EXPERIMENTAL}'"
+            f" inside the tags list of {DABL_META_NAME} instead."))
+
+    if dabl_meta.integrations:
+        LOG.warn((
+            f"The 'integrations' metadata field is deprecated, and support may be"
+            f" dropped in a future release. Please use  'integration_types' inside"
+            f" {DABL_META_NAME} instead."))
+
+
 def load_dabl_meta() -> 'PackageMetadata':
     try:
         with open(DABL_META_NAME, "r") as f:
             dabl_meta = accept_dabl_meta(f.read().encode())
-            check_experimental(dabl_meta)
+            _check_deprecated(dabl_meta)
 
-            return dabl_meta
+            return normalize_package_metadata(dabl_meta)
     except FileNotFoundError:
         die(f'Project metadata file not found: {DABL_META_NAME}')
 
@@ -58,26 +82,12 @@ def package_meta_integration_types(
 
     return {itype.id: itype for itype in package_itypes}
 
-def check_experimental(dabl_meta: 'PackageMetadata'):
-    catalog = with_catalog(dabl_meta)
-    if catalog.experimental is not None:
-        LOG.warn((
-            f"The '{TAG_EXPERIMENTAL}' flag is deprecated, and support may be"
-            f" dropped in a future release. Please specify '{TAG_EXPERIMENTAL}'"
-            f" inside the tags list of {DABL_META_NAME} instead."))
-
 def get_experimental(catalog: 'CatalogInfo'):
     experimental = (TAG_EXPERIMENTAL in catalog.tags) or (catalog.experimental)
     if experimental is None:
         return False
     else:
         return experimental
-
-def with_catalog(dabl_meta: 'PackageMetadata') -> 'CatalogInfo':
-    if dabl_meta.catalog is None:
-        die(f'Missing catalog information in {DABL_META_NAME}')
-    else:
-        return dabl_meta.catalog
 
 def package_dit_basename(dabl_meta: 'PackageMetadata') -> str:
     catalog = with_catalog(dabl_meta)

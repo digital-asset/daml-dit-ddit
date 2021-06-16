@@ -25,7 +25,8 @@ from pex.resolver import \
 
 from daml_dit_api import \
     DABL_META_NAME, \
-    DamlModelInfo
+    DamlModelInfo, \
+    IntegrationTypeInfo
 
 from .log import LOG
 
@@ -305,7 +306,10 @@ def subcommand_main(
             catalog=replace(dabl_meta.catalog,
                             release_date=date.today()),
             daml_model=daml_model_info,
-            subdeployments=subdeployments)
+            subdeployments=subdeployments,
+            integration_types=[normalize_integration_type(ittype)
+                               for ittype
+                               in (dabl_meta.integration_types or [])])
 
         pex_writestr(pexfile, DABL_META_NAME, filebytes=package_meta_yaml(dabl_meta))
 
@@ -323,6 +327,18 @@ def subcommand_main(
     dit_file_contents = read_binary_file(dit_filename)
 
     LOG.info('Artifact hash: %r', artifact_hash(dit_file_contents))
+
+
+def normalize_integration_type(itype: 'IntegrationTypeInfo') -> 'IntegrationTypeInfo':
+
+    if itype.runtime:
+        LOG.warn(f'Explicit integration type runtime {itype.runtime} ignored'
+                 f' for integration ID {itype.id}. This field does not need to'
+                 f' be specified.')
+
+    # Runtime is currently fixed at python direct, and is controlled
+    # by the ddit build process anyway, so makes sense to populate here.
+    return replace(itype, runtime='python-direct')
 
 
 def setup(sp):

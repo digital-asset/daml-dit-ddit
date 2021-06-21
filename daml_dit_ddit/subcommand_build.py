@@ -72,7 +72,7 @@ def pex_write(pex: 'ZipFile', filepath: str, arcname: 'Optional[str]' = None):
 def build_pex(pex_filename: str, local_only: bool) -> str:
     pex_builder = PEXBuilder(include_tools=True)
 
-    pex_builder.info.inherit_path = InheritPath.PREFER
+    pex_builder.info.inherit_path = InheritPath.FALLBACK
 
     pex_builder.set_entry_point('daml_dit_if.main:main')
     pex_builder.set_shebang('/usr/bin/env python3')

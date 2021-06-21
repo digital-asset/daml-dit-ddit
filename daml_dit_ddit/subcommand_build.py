@@ -42,6 +42,13 @@ from .common import \
     with_catalog
 
 
+DAML_YAML_NAME = 'daml.yaml'
+
+PYTHON_REQUIREMENT_FILE='requirements.txt'
+
+IF_PROJECT_NAME = 'daml-dit-if'
+
+
 def check_target_file(filename: str, force: bool):
     if os.path.exists(filename):
         if force:
@@ -62,10 +69,10 @@ def pex_write(pex: 'ZipFile', filepath: str, arcname: 'Optional[str]' = None):
     else:
         pex.write(filepath, arcname=arcname)
 
-def build_pex(pex_filename: str, local_only: bool):
+def build_pex(pex_filename: str, local_only: bool) -> str:
     pex_builder = PEXBuilder(include_tools=True)
 
-    pex_builder.info.inherit_path = InheritPath.PREFER
+    pex_builder.info.inherit_path = InheritPath.FALLBACK
 
     pex_builder.set_entry_point('daml_dit_if.main:main')
     pex_builder.set_shebang('/usr/bin/env python3')
@@ -83,15 +90,32 @@ def build_pex(pex_filename: str, local_only: bool):
             parsed_platform('manylinux2014_x86_64-cp-38-cp38')
         ]
 
+    daml_dit_if_bundled = False
+
     try:
-        LOG.info('Resolving dependencies...')
+        if os.path.isfile(PYTHON_REQUIREMENT_FILE):
+            LOG.info(f'Bundling dependencies from {PYTHON_REQUIREMENT_FILE}...')
+            requirement_files=[PYTHON_REQUIREMENT_FILE]
+        else:
+            LOG.info(f'No dependency file found ({PYTHON_REQUIREMENT_FILE}), no dependencies will be bundled.')
+            requirement_files=[]
 
         resolveds = resolve_multi(
             requirements=[],
-            requirement_files=['requirements.txt'],
+            requirement_files=requirement_files,
             platforms=platforms)
 
         for resolved_dist in resolveds:
+
+            if resolved_dist.distribution.project_name == IF_PROJECT_NAME \
+               and not daml_dit_if_bundled:
+
+                LOG.warn(f'Bundling {IF_PROJECT_NAME} in output DIT file. This will'
+                         f' override the version provided by Daml Hub, potentially'
+                         f' compromising compatibility of this integration with'
+                         f' future updates to Daml Hub. Use this option with caution.')
+                daml_dit_if_bundled = True
+
             LOG.debug("req: %s", resolved_dist.distribution)
             LOG.debug("     -> target: %s", resolved_dist.target)
 
@@ -135,7 +159,11 @@ def build_pex(pex_filename: str, local_only: bool):
         bytecode_compile=True,
         deterministic_timestamp=True)
 
-DAML_YAML_NAME = 'daml.yaml'
+    if daml_dit_if_bundled:
+        return 'python-direct'
+    else:
+        return 'python-direct-hub-if'
+
 
 def daml_yaml_version():
     with open(DAML_YAML_NAME, "r") as f:
@@ -250,13 +278,15 @@ def subcommand_main(
 
             LOG.info('Main package ID: %r', main_package_id)
 
+    integration_runtime = 'python-direct'
+
     if is_integration:
         if not len(integration_types):
             die('daml-meta.yaml does not specify integration types and therefore '
                 'cannot be built with --integration')
 
         LOG.warn('Building as integration. Authorization will be required to install in Daml Hub.')
-        build_pex(tmp_filename, local_only)
+        integration_runtime = build_pex(tmp_filename, local_only)
 
     else:
         if len(integration_types):
@@ -307,7 +337,7 @@ def subcommand_main(
                             release_date=date.today()),
             daml_model=daml_model_info,
             subdeployments=subdeployments,
-            integration_types=[normalize_integration_type(ittype)
+            integration_types=[normalize_integration_type(ittype, integration_runtime)
                                for ittype
                                in (dabl_meta.integration_types or [])])
 
@@ -329,7 +359,7 @@ def subcommand_main(
     LOG.info('Artifact hash: %r', artifact_hash(dit_file_contents))
 
 
-def normalize_integration_type(itype: 'IntegrationTypeInfo') -> 'IntegrationTypeInfo':
+def normalize_integration_type(itype: 'IntegrationTypeInfo', runtime: str) -> 'IntegrationTypeInfo':
 
     if itype.runtime:
         LOG.warn(f'Explicit integration type runtime {itype.runtime} ignored'
@@ -338,7 +368,7 @@ def normalize_integration_type(itype: 'IntegrationTypeInfo') -> 'IntegrationType
 
     # Runtime is currently fixed at python direct, and is controlled
     # by the ddit build process anyway, so makes sense to populate here.
-    return replace(itype, runtime='python-direct')
+    return replace(itype, runtime=runtime)
 
 
 def setup(sp):

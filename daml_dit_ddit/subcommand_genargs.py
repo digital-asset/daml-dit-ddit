@@ -38,7 +38,7 @@ def subcommand_main(integration_type_id: str, force: bool = False):
 def setup(sp):
     sp.add_argument('integration_type_id', metavar='integration_type_id')
 
-    sp.add_argument('--force', help='Forcibly overwrite argument file if it exists.',
+    sp.add_argument('--force', help='Forcibly overwrite argument file if it alreadyy exists.',
                     dest='force', action='store_true', default=False)
 
     return subcommand_main

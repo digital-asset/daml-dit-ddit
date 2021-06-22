@@ -65,10 +65,10 @@ def setup(sp):
     sp.add_argument('--log-level', help='Set integration log level',
                     dest='log_level', action='store', default=None)
 
-    sp.add_argument('--if-version', help='Use a specific version of daml-dit-if.',
+    sp.add_argument('--if-version', help='Ensure the integration is run with a specific daml-dit-if, by version.',
                     dest='if_version', action='store', default=None)
 
-    sp.add_argument('--if-file', help='Ensure the integration is run with a specific daml-dit-if.',
+    sp.add_argument('--if-file', help='Ensure the integration is run with a specific daml-dit-if, by file.',
                     dest='if_file', action='store', default=None)
 
     return subcommand_main

@@ -39,12 +39,11 @@ from .common import \
     package_dit_filename, \
     package_meta_integration_types, \
     read_binary_file, \
-    with_catalog
+    with_catalog, \
+    PYTHON_REQUIREMENT_FILE
 
 
 DAML_YAML_NAME = 'daml.yaml'
-
-PYTHON_REQUIREMENT_FILE='requirements.txt'
 
 IF_PROJECT_NAME = 'daml-dit-if'
 

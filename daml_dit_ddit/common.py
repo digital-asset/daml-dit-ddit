@@ -21,6 +21,11 @@ from daml_dit_api import \
 from .log import LOG
 
 
+VIRTUAL_ENV_DIR = '.ddit-venv'
+
+PYTHON_REQUIREMENT_FILE = 'requirements.txt'
+
+
 def die(message: str) -> 'NoReturn':
     LOG.error(f'Fatal Error: {message}')
     sys.exit(9)
@@ -138,3 +143,18 @@ def read_binary_file(filename: str) -> bytes:
         file_contents = file.read()
 
     return file_contents
+
+def get_itype(integration_type_id):
+    dabl_meta = load_dabl_meta()
+
+    itypes = package_meta_integration_types(dabl_meta)
+
+    itype = itypes.get(integration_type_id)
+
+    if itype is None:
+        show_integration_types(dabl_meta)
+        print()
+        die(f'Unknown integration type: {integration_type_id}\n')
+
+
+    return itype

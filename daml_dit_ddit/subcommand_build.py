@@ -125,7 +125,6 @@ def build_pex(pex_filename: str, local_only: bool) -> str:
 
                 pex_builder.add_requirement(resolved_dist.direct_requirement)
 
-
     except Unsatisfiable as e:
         die(f'Unsatifiable dependency error: {e}')
 
@@ -144,10 +143,24 @@ def build_pex(pex_filename: str, local_only: bool) -> str:
 
     pex_builder.freeze(bytecode_compile=True)
 
+    # Entry point verification is disabled because ddit does not
+    # formally depend on the integration framework, and it is not
+    # necessarily available at integration build time. Because entry
+    # point verification happens in ddit's environment and the
+    # entrypoint is in the framework, this causes entry point
+    # verification to fail unless some other agent has installed
+    # daml-dit-if into ddit's environment.
+    #
+    # Virtual environments provide a way to work around this (and are
+    # used in 'ddit run') but the PEX API does not allow a virtual
+    # environment to be specified at build time. If this ever changes,
+    # the build subcommand should be modified to prepare a virtual
+    # enviroment for the build that contains the appropriate version
+    # of daml-dit-if and entrypoint verification should be re-enabled.
     pex = PEX(
         pex_builder.path(),
         interpreter=pex_builder.interpreter,
-        verify_entry_point=True)
+        verify_entry_point=False)
 
     LOG.info('Building intermediate PEX file...')
 

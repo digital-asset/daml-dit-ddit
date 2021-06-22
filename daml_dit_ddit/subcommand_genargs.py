@@ -12,7 +12,6 @@ from .log import LOG
 from .common import die, get_itype
 
 def generate_argfile(integration_type: 'IntegrationTypeInfo'):
-
     with open(INTEGRATION_ARG_FILE, "w") as out:
         out.write(f'# Arguments for integration type \'{integration_type.id}\'\n')
         out.write('\n')

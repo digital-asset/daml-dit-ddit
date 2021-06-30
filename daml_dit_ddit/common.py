@@ -25,6 +25,7 @@ VIRTUAL_ENV_DIR = '.ddit-venv'
 
 PYTHON_REQUIREMENT_FILE = 'requirements.txt'
 
+INTEGRATION_ARG_FILE = 'int_args.yaml'
 
 def die(message: str) -> 'NoReturn':
     LOG.error(f'Fatal Error: {message}')

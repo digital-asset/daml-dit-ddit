@@ -239,7 +239,7 @@ def get_dar_main_package_id(dar_filename: str) -> str:
 
 
 def subcommand_main(
-        is_integration: bool,
+        force_integration: bool,
         force: bool,
         skip_dar_build: bool,
         rebuild_dar: bool,
@@ -292,22 +292,19 @@ def subcommand_main(
 
     integration_runtime = 'python-direct'
 
-    if is_integration:
-        if not len(integration_types):
-            die('daml-meta.yaml does not specify integration types and therefore '
-                'cannot be built with --integration')
+    is_integration = len(integration_types) > 0
 
-        LOG.warn('Building as integration. Authorization will be required to install in Daml Hub.')
+    if is_integration:
+        LOG.warn(f'Integration types found in {DABL_META_NAME} - building as integration.'
+                 f' Authorization will be required to install in Daml Hub.')
         integration_runtime = build_pex(tmp_filename, local_only)
 
-    else:
-        if len(integration_types):
-            die('daml-meta.yaml specifies integration types and therefore '
-                'must be built with --integration')
+    elif local_only:
+        die(f'--local-only may just be used on integration builds. (Builds with'
+            f' integration types listed in {DABL_META_NAME}.')
 
-        if local_only:
-            die('--local-only may just be used on builds with --integration '
-                'specified.')
+    if force_integration and not is_integration:
+        die(f'--integration build specified with no integration types defined.')
 
     subdeployments = [
         *(dabl_meta.subdeployments or []),
@@ -315,6 +312,8 @@ def subcommand_main(
           for sd_filename
           in add_subdeployments]
     ]
+
+    icon_file = None if dabl_meta.catalog is None else dabl_meta.catalog.icon_file
 
     resource_files = set()
 
@@ -337,6 +336,10 @@ def subcommand_main(
             LOG.info(f'  Adding package file: {sd_filename} as {arcname}')
             pex_write(pexfile, sd_filename, arcname=arcname)
 
+        if icon_file and os.path.isfile(icon_file):
+            pex_write(pexfile, icon_file)
+            resource_files.add(icon_file)
+
         if dar_filename:
             pex_write(pexfile, dar_filename)
             resource_files.add(dar_filename)
@@ -358,8 +361,6 @@ def subcommand_main(
     for subdeployment in subdeployments:
         if subdeployment not in resource_files:
             die(f'Subdeployment {subdeployment} not available in DIT file resources: {resource_files}')
-
-    icon_file = None if dabl_meta.catalog is None else dabl_meta.catalog.icon_file
 
     if icon_file and icon_file not in resource_files:
         die(f'Icon {icon_file} not available in DIT file resources: {resource_files}')
@@ -384,10 +385,9 @@ def normalize_integration_type(itype: 'IntegrationTypeInfo', runtime: str) -> 'I
 
 
 def setup(sp):
-
-    sp.add_argument('--integration', help='Build DIT file with integration support. '
-                    'DA approval requried to deploy.',
-                    dest='is_integration', action='store_true', default=False)
+    sp.add_argument('--integration', help='Require the DIT file be built as an integration. '
+                    'DA approval required to deploy.',
+                    dest='force_integration', action='store_true', default=False)
 
     sp.add_argument('--force', help='Forcibly overwrite target files if they exist',
                     dest='force', action='store_true', default=False)

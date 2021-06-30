@@ -97,7 +97,7 @@ Available catalog fields include the following:
 | `demo_url` | An optional link to a live Demonstration instance of the project. |
 | `source_url` | A optional link to the project's source repository. |
 | `tags` | A list of tags associated with the project. These can be used to query specific sets of artifacts from the arcade for display in the console. |
-| `icon_file` | The filename for the project's icon file. This file can be either `PNG` or `SVG` and a file of that name must be present in `pkg/` to be included in the output DIT. |
+| `icon_file` | The filename for the project's icon file. This file can be either a `PNG` or `SVG` image and must be present by that name in the output DIT. By default, `ddit` will look for the icon file in the project root and include from there if found.  |
 
 Note that there are a few other catalog fields listed in the API
 source and shown in the output of `ddit inspect`. These are generally
@@ -111,8 +111,7 @@ deprecated for future use.
 ## `pkg/`
 
 This is an optional directory that contains other resources to be
-includued in the output DIT. This is usually used to package the icon
-named by `icon_file`.
+includued in the output DIT. 
 
 ## Daml Project
 
@@ -197,13 +196,11 @@ integration DIT files to Daml Hub. Please contact
 [Digital Asset](https://discuss.daml.com/) for more information on
 deploying custom integration types into Daml Hub.
 
-`ddit` requires that integration DIT files be built with the `--integration`
-flag and contain an `integration_types` section in their
-`dabl-meta.yaml`. This section specifies the integration types
-contained in the DIT file.
-
-When running with `--integration` specified, the DIT file project
-directory gains the traits of a Python project.
+`ddit` will build an integration DIT file for projects that define
+`integration_types` in their `dabl-meta.yaml` This section specifies
+the integration types contained in the DIT file. When building as an
+integration, the DIT file project directory gains some of the traits
+of a Python project.
 
 * Python dependencies to be included in the output DIT can be
   specified in an optional `requirements.txt` file at the root of the

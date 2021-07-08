@@ -25,6 +25,7 @@ from pex.resolver import \
 
 from daml_dit_api import \
     DABL_META_NAME, \
+    DIT_META_NAME, \
     DamlModelInfo, \
     IntegrationTypeInfo
 
@@ -356,7 +357,11 @@ def subcommand_main(
                                for ittype
                                in (dabl_meta.integration_types or [])])
 
-        pex_writestr(pexfile, DABL_META_NAME, filebytes=package_meta_yaml(dabl_meta))
+        # Write metadata under two names to account for both old and new
+        # conventions.
+        yaml_filebytes = package_meta_yaml(dabl_meta)
+        pex_writestr(pexfile, DIT_META_NAME, filebytes=yaml_filebytes)
+        pex_writestr(pexfile, DABL_META_NAME, filebytes=yaml_filebytes)
 
     for subdeployment in subdeployments:
         if subdeployment not in resource_files:

@@ -272,7 +272,8 @@ def subcommand_main(
     daml_model_info = None
 
     if skip_dar_build:
-        LOG.info('Skipping DAR build (--skip-dar-build specified)')
+        LOG.info('Skipping DAR build (--skip-dar-build specified, no Daml model'
+                 ' information will be availble in build.)')
         dar_filename = None
     else:
         catalog = with_catalog(dabl_meta)
@@ -296,13 +297,13 @@ def subcommand_main(
     is_integration = len(integration_types) > 0
 
     if is_integration:
-        LOG.warn(f'Integration types found in {DABL_META_NAME} - building as integration.'
-                 f' Authorization will be required to install in Daml Hub.')
+        LOG.warn('Integration types found in project - building as integration.'
+                 ' Authorization will be required to install in Daml Hub.')
         integration_runtime = build_pex(tmp_filename, local_only)
 
     elif local_only:
         die(f'--local-only may just be used on integration builds. (Builds with'
-            f' integration types listed in {DABL_META_NAME}.')
+            f' integration types defined in project.)')
 
     if force_integration and not is_integration:
         die(f'--integration build specified with no integration types defined.')

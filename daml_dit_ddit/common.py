@@ -13,6 +13,7 @@ from hashlib import sha256
 
 from daml_dit_api import \
     DABL_META_NAME, \
+    DIT_META_NAMES, \
     IntegrationTypeInfo, \
     PackageMetadata, \
     TAG_EXPERIMENTAL, \
@@ -42,12 +43,12 @@ def accept_dabl_meta(data: bytes) -> 'PackageMetadata':
             data_class=PackageMetadata,
             data=yaml.safe_load(data))
     except:
-        die(f'Error loading project metadata file: {DABL_META_NAME}')
+        die(f'Error parsing project metadata file.')
 
 
 def with_catalog(dabl_meta: 'PackageMetadata') -> 'CatalogInfo':
     if dabl_meta.catalog is None:
-        die(f'Missing catalog information in {DABL_META_NAME}')
+        die(f'Missing catalog information in project metadata file.')
     else:
         return dabl_meta.catalog
 
@@ -59,24 +60,42 @@ def _check_deprecated(dabl_meta: 'PackageMetadata'):
         LOG.warn((
             f"The 'experimental' metadata field is deprecated, and support may be"
             f" dropped in a future release. Please specify '{TAG_EXPERIMENTAL}'"
-            f" inside the tags list of {DABL_META_NAME} instead."))
+            f" inside the project's tag list instead."))
 
     if dabl_meta.integrations:
         LOG.warn((
             f"The 'integrations' metadata field is deprecated, and support may be"
-            f" dropped in a future release. Please use  'integration_types' inside"
-            f" {DABL_META_NAME} instead."))
+            f" dropped in a future release. Please use  'integration_types'"
+            f" instead."))
 
 
 def load_dabl_meta() -> 'PackageMetadata':
-    try:
-        with open(DABL_META_NAME, "r") as f:
-            dabl_meta = accept_dabl_meta(f.read().encode())
-            _check_deprecated(dabl_meta)
+    dabl_meta = None
 
-            return normalize_package_metadata(dabl_meta)
-    except FileNotFoundError:
-        die(f'Project metadata file not found: {DABL_META_NAME}')
+    preferred_file_name = DIT_META_NAMES[0]
+
+    for file_name in DIT_META_NAMES:
+        try:
+            with open(file_name, "r") as f:
+                if dabl_meta:
+                    die(f'Duplicate project metadata file: {file_name}.'
+                        f' Please use only {preferred_file_name}.')
+                elif file_name != preferred_file_name:
+                    LOG.warn(f'Storing project metadata in {file_name} is deprecated.'
+                             f' Please use {preferred_file_name}.')
+
+                raw_dabl_meta = accept_dabl_meta(f.read().encode())
+                _check_deprecated(raw_dabl_meta)
+
+                dabl_meta = normalize_package_metadata(raw_dabl_meta)
+
+        except FileNotFoundError:
+            pass
+
+    if dabl_meta:
+        return dabl_meta
+
+    die(f'Project metadata file not found: {DIT_META_NAMES}')
 
 
 def package_meta_integration_types(

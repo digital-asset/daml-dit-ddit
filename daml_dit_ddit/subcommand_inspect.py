@@ -5,7 +5,7 @@ from typing import Dict
 from zipfile import ZipFile
 
 from daml_dit_api import \
-    DABL_META_NAME, \
+    DIT_META_NAMES, \
     PackageMetadata
 
 from .common import \
@@ -14,6 +14,8 @@ from .common import \
     accept_dabl_meta, \
     read_binary_file, \
     show_package_summary
+
+from .log import LOG
 
 
 def show_subdeployments(dabl_meta: 'PackageMetadata', contents):
@@ -50,14 +52,24 @@ def subcommand_main(dit_filename: str):
         for zi in ditfile.infolist():
             contents[zi.filename] = ditfile.read(zi)
 
-    try:
-        dabl_meta = accept_dabl_meta(contents[DABL_META_NAME])
+    dabl_meta = None
 
-        show_package_summary(dabl_meta)
-        show_subdeployments(dabl_meta, contents)
+    for subfile_name in DIT_META_NAMES:
+        meta_contents = contents.get(subfile_name)
 
-    except KeyError:
-        die(f'DIT file missing metadata ({DABL_META_NAME} missing): {dit_filename}')
+        if meta_contents:
+            if dabl_meta:
+                LOG.debug(f' Additional metadata subfile ignored: {subfile_name}. (This'
+                          f' is expected in DIT files built to be compatible with'
+                          f' both the old and new metadata filenames.)')
+
+            dabl_meta = accept_dabl_meta(contents[subfile_name])
+
+    if dabl_meta is None:
+        die(f'DIT file missing metadata ({DIT_META_NAMES[0]} missing): {dit_filename}')
+
+    show_package_summary(dabl_meta)
+    show_subdeployments(dabl_meta, contents)
 
 
 def setup(sp):

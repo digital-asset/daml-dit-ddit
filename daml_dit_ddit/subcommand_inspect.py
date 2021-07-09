@@ -11,7 +11,7 @@ from daml_dit_api import \
 from .common import \
     die, \
     artifact_hash, \
-    accept_dabl_meta, \
+    accept_dabl_meta_bytes, \
     read_binary_file, \
     show_package_summary
 
@@ -63,7 +63,7 @@ def subcommand_main(dit_filename: str):
                           f' is expected in DIT files built to be compatible with'
                           f' both the old and new metadata filenames.)')
 
-            dabl_meta = accept_dabl_meta(contents[subfile_name])
+            dabl_meta = accept_dabl_meta_bytes(contents[subfile_name])
 
     if dabl_meta is None:
         die(f'DIT file missing metadata ({DIT_META_NAMES[0]} missing): {dit_filename}')

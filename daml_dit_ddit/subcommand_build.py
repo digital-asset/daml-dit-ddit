@@ -41,10 +41,10 @@ from .common import \
     package_meta_integration_types, \
     read_binary_file, \
     with_catalog, \
-    PYTHON_REQUIREMENT_FILE
+    PYTHON_REQUIREMENT_FILE, \
+    daml_yaml_version, \
+    load_daml_yaml
 
-
-DAML_YAML_NAME = 'daml.yaml'
 
 IF_PROJECT_NAME = 'daml-dit-if'
 
@@ -178,23 +178,10 @@ def build_pex(pex_filename: str, local_only: bool) -> str:
         return 'python-direct-hub-if'
 
 
-def daml_yaml_version():
-    with open(DAML_YAML_NAME, "r") as f:
-        daml_yaml = yaml.safe_load(f.read())
-
-        LOG.debug(f'{DAML_YAML_NAME}: %r', daml_yaml)
-
-        if 'version' in daml_yaml:
-            version = daml_yaml['version']
-            LOG.info(f'Daml model version from {DAML_YAML_NAME}: %r', version)
-            return version
-        else:
-            die(f'No model version specified in {DAML_YAML_NAME}')
-
-
 def build_dar(base_filename: str, dar_version: str, rebuild_dar: bool) -> 'Optional[str]':
-    if not os.path.exists(DAML_YAML_NAME):
-        LOG.info(f'No {DAML_YAML_NAME} found, skipping DAR build.')
+
+    if load_daml_yaml() is None:
+        LOG.info(f'No Daml model found, skipping DAR build.')
         return None
 
     dar_filename = f'{base_filename}-{dar_version}.dar'
@@ -399,7 +386,7 @@ def setup(sp):
                     dest='force', action='store_true', default=False)
 
     sp.add_argument('--skip-dar-build',
-                    help=f'Skip the DAR build, even if there is a {DAML_YAML_NAME}.',
+                    help=f'Skip the DAR build, even if there is a Daml model project present.',
                     dest='skip_dar_build', action='store_true', default=False)
 
     sp.add_argument('--rebuild-dar', help='Rebuild and overwrite the DAR if it already exists',

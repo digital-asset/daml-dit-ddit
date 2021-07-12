@@ -84,7 +84,7 @@ dev = ["pytest (>=5)", "pytest-cov", "coveralls", "black", "mypy", "pylint"]
 
 [[package]]
 name = "daml-dit-api"
-version = "0.4.4"
+version = "0.4.5"
 description = "Daml Hub DIT File API Package"
 category = "main"
 optional = false
@@ -542,7 +542,7 @@ develop = []
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7, <3.10"
-content-hash = "a3286ef782932905a139f8234051ff463a4c99cfb43c4dcae16999e0bc20cc26"
+content-hash = "bd64d093ab3a0612fcd8a71ca4b98047961be5b523ad23444ceb33bf24dc8608"
 
 [metadata.files]
 aiohttp = [
@@ -613,8 +613,8 @@ dacite = [
     {file = "dacite-1.6.0.tar.gz", hash = "sha256:d48125ed0a0352d3de9f493bf980038088f45f3f9d7498f090b50a847daaa6df"},
 ]
 daml-dit-api = [
-    {file = "daml-dit-api-0.4.4.tar.gz", hash = "sha256:266f1fff74e5a6e3f39e064fc061e0d82f1d983d25e126b3d3d8d01770410dcc"},
-    {file = "daml_dit_api-0.4.4-py3-none-any.whl", hash = "sha256:3a086882ba8b5cab4c73568b189a2f049a337fe34da886ad55c7081b5a1f353d"},
+    {file = "daml-dit-api-0.4.5.tar.gz", hash = "sha256:08c036e7190498674cf57b8cb89b76b583e6eeb49e47e2ad6e329574b6e80bf5"},
+    {file = "daml_dit_api-0.4.5-py3-none-any.whl", hash = "sha256:0af6af35cd634497e5164f6f642547a739d42f621bf4e409837903080c82a043"},
 ]
 dazl = [
     {file = "dazl-7.5.6-py3-none-any.whl", hash = "sha256:e9b7597f59857010ab407b83ba88f6f709d3aa728592b5623e78009170940bcf"},

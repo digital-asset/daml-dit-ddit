@@ -112,7 +112,7 @@ def load_dabl_meta() -> 'PackageMetadata':
         dabl_meta_yaml = daml_yaml.get(DIT_META_KEY_NAME, None)
 
         if dabl_meta_yaml:
-            LOG.debuug(f'Project metadata found in {DAML_YAML_NAME}')
+            LOG.debug(f'Project metadata found in {DAML_YAML_NAME}')
             raw_dabl_meta = accept_dabl_meta(dabl_meta_yaml)
 
 

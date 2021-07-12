@@ -13,6 +13,7 @@ dacite = "*"
 pyyaml = "^5"
 pex = "2.1.30"
 daml-dit-api = "0.4.4"
+dazl = "^7"
 GitPython = "3.1.12"
 PyGithub = "1.54.1"
 

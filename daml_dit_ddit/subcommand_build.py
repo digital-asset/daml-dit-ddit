@@ -10,6 +10,9 @@ from pathlib import Path
 
 from zipfile import ZipFile
 
+from dazl.damlast.lookup import parse_type_con_name
+from dazl.damlast.util import package_ref
+
 from pex.pex import PEX
 
 from pex.pex_builder import \
@@ -341,7 +344,7 @@ def subcommand_main(
                             release_date=date.today()),
             daml_model=daml_model_info,
             subdeployments=subdeployments,
-            integration_types=[normalize_integration_type(ittype, integration_runtime)
+            integration_types=[normalize_integration_type(ittype, integration_runtime, daml_model_info)
                                for ittype
                                in (dabl_meta.integration_types or [])])
 
@@ -365,16 +368,40 @@ def subcommand_main(
     LOG.info('Artifact hash: %r', artifact_hash(dit_file_contents))
 
 
-def normalize_integration_type(itype: 'IntegrationTypeInfo', runtime: str) -> 'IntegrationTypeInfo':
+def normalize_integration_type(
+        itype: 'IntegrationTypeInfo', runtime: str, daml_model_info: 'Optional[DamlModelInfo]'
+) -> 'IntegrationTypeInfo':
 
     if itype.runtime:
         LOG.warn(f'Explicit integration type runtime {itype.runtime} ignored'
                  f' for integration ID {itype.id}. This field does not need to'
                  f' be specified.')
 
-    # Runtime is currently fixed at python direct, and is controlled
-    # by the ddit build process anyway, so makes sense to populate here.
-    return replace(itype, runtime=runtime)
+    updates = {
+        # Runtime is currently fixed at python direct, and is
+        # controlled by the ddit build process anyway, so makes sense
+        # to populate here.
+        'runtime': runtime
+    }
+
+    if itype.instance_template:
+        if daml_model_info is None:
+            # This could be fixed by adding another option to
+            # explicitly bind a Daml model even when ddit is not
+            # managind the Daml model build.
+            die(f'Instance templates cannot be used with --skip-dar-build, due to lack of'
+                f'Daml model info.')
+
+        if itype.instance_template == '*':
+            die(f'Integration type instance templates cannot be a wildcard and must'
+                f' explicitly specify a template.')
+
+        package = package_ref(parse_type_con_name(itype.instance_template))
+
+        if package == '*':
+            updates['instance_template'] = f'{daml_model_info.main_package_id}:{itype.instance_template}'
+
+    return replace(itype, **updates)
 
 
 def setup(sp):

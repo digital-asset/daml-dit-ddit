@@ -10,6 +10,9 @@ from pathlib import Path
 
 from zipfile import ZipFile
 
+from dazl.damlast.lookup import parse_type_con_name
+from dazl.damlast.util import package_ref
+
 from pex.pex import PEX
 
 from pex.pex_builder import \
@@ -25,6 +28,7 @@ from pex.resolver import \
 
 from daml_dit_api import \
     DABL_META_NAME, \
+    DIT_META_NAME, \
     DamlModelInfo, \
     IntegrationTypeInfo
 
@@ -40,10 +44,10 @@ from .common import \
     package_meta_integration_types, \
     read_binary_file, \
     with_catalog, \
-    PYTHON_REQUIREMENT_FILE
+    PYTHON_REQUIREMENT_FILE, \
+    daml_yaml_version, \
+    load_daml_yaml
 
-
-DAML_YAML_NAME = 'daml.yaml'
 
 IF_PROJECT_NAME = 'daml-dit-if'
 
@@ -177,23 +181,10 @@ def build_pex(pex_filename: str, local_only: bool) -> str:
         return 'python-direct-hub-if'
 
 
-def daml_yaml_version():
-    with open(DAML_YAML_NAME, "r") as f:
-        daml_yaml = yaml.safe_load(f.read())
-
-        LOG.debug(f'{DAML_YAML_NAME}: %r', daml_yaml)
-
-        if 'version' in daml_yaml:
-            version = daml_yaml['version']
-            LOG.info(f'Daml model version from {DAML_YAML_NAME}: %r', version)
-            return version
-        else:
-            die(f'No model version specified in {DAML_YAML_NAME}')
-
-
 def build_dar(base_filename: str, dar_version: str, rebuild_dar: bool) -> 'Optional[str]':
-    if not os.path.exists(DAML_YAML_NAME):
-        LOG.info(f'No {DAML_YAML_NAME} found, skipping DAR build.')
+
+    if load_daml_yaml() is None:
+        LOG.info(f'No Daml model found, skipping DAR build.')
         return None
 
     dar_filename = f'{base_filename}-{dar_version}.dar'
@@ -271,7 +262,8 @@ def subcommand_main(
     daml_model_info = None
 
     if skip_dar_build:
-        LOG.info('Skipping DAR build (--skip-dar-build specified)')
+        LOG.info('Skipping DAR build (--skip-dar-build specified, no Daml model'
+                 ' information will be availble in build.)')
         dar_filename = None
     else:
         catalog = with_catalog(dabl_meta)
@@ -295,13 +287,13 @@ def subcommand_main(
     is_integration = len(integration_types) > 0
 
     if is_integration:
-        LOG.warn(f'Integration types found in {DABL_META_NAME} - building as integration.'
-                 f' Authorization will be required to install in Daml Hub.')
+        LOG.warn('Integration types found in project - building as integration.'
+                 ' Authorization will be required to install in Daml Hub.')
         integration_runtime = build_pex(tmp_filename, local_only)
 
     elif local_only:
         die(f'--local-only may just be used on integration builds. (Builds with'
-            f' integration types listed in {DABL_META_NAME}.')
+            f' integration types defined in project.)')
 
     if force_integration and not is_integration:
         die(f'--integration build specified with no integration types defined.')
@@ -352,11 +344,15 @@ def subcommand_main(
                             release_date=date.today()),
             daml_model=daml_model_info,
             subdeployments=subdeployments,
-            integration_types=[normalize_integration_type(ittype, integration_runtime)
+            integration_types=[normalize_integration_type(ittype, integration_runtime, daml_model_info)
                                for ittype
                                in (dabl_meta.integration_types or [])])
 
-        pex_writestr(pexfile, DABL_META_NAME, filebytes=package_meta_yaml(dabl_meta))
+        # Write metadata under two names to account for both old and new
+        # conventions.
+        yaml_filebytes = package_meta_yaml(dabl_meta)
+        pex_writestr(pexfile, DIT_META_NAME, filebytes=yaml_filebytes)
+        pex_writestr(pexfile, DABL_META_NAME, filebytes=yaml_filebytes)
 
     for subdeployment in subdeployments:
         if subdeployment not in resource_files:
@@ -372,16 +368,40 @@ def subcommand_main(
     LOG.info('Artifact hash: %r', artifact_hash(dit_file_contents))
 
 
-def normalize_integration_type(itype: 'IntegrationTypeInfo', runtime: str) -> 'IntegrationTypeInfo':
+def normalize_integration_type(
+        itype: 'IntegrationTypeInfo', runtime: str, daml_model_info: 'Optional[DamlModelInfo]'
+) -> 'IntegrationTypeInfo':
 
     if itype.runtime:
         LOG.warn(f'Explicit integration type runtime {itype.runtime} ignored'
                  f' for integration ID {itype.id}. This field does not need to'
                  f' be specified.')
 
-    # Runtime is currently fixed at python direct, and is controlled
-    # by the ddit build process anyway, so makes sense to populate here.
-    return replace(itype, runtime=runtime)
+    updates = {
+        # Runtime is currently fixed at python direct, and is
+        # controlled by the ddit build process anyway, so makes sense
+        # to populate here.
+        'runtime': runtime
+    }
+
+    if itype.instance_template:
+        if daml_model_info is None:
+            # This could be fixed by adding another option to
+            # explicitly bind a Daml model even when ddit is not
+            # managind the Daml model build.
+            die(f'Instance templates cannot be used with --skip-dar-build, due to lack of'
+                f'Daml model info.')
+
+        if itype.instance_template == '*':
+            die(f'Integration type instance templates cannot be a wildcard and must'
+                f' explicitly specify a template.')
+
+        package = package_ref(parse_type_con_name(itype.instance_template))
+
+        if package == '*':
+            updates['instance_template'] = f'{daml_model_info.main_package_id}:{itype.instance_template}'
+
+    return replace(itype, **updates)
 
 
 def setup(sp):
@@ -393,7 +413,7 @@ def setup(sp):
                     dest='force', action='store_true', default=False)
 
     sp.add_argument('--skip-dar-build',
-                    help=f'Skip the DAR build, even if there is a {DAML_YAML_NAME}.',
+                    help=f'Skip the DAR build, even if there is a Daml model project present.',
                     dest='skip_dar_build', action='store_true', default=False)
 
     sp.add_argument('--rebuild-dar', help='Rebuild and overwrite the DAR if it already exists',

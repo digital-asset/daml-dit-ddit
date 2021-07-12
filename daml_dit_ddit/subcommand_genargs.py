@@ -2,7 +2,6 @@ import os
 from daml_dit_api import IntegrationTypeInfo
 
 from .common import \
-    load_dabl_meta, \
     show_integration_types, \
     package_meta_integration_types, \
     INTEGRATION_ARG_FILE

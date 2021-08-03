@@ -3,7 +3,7 @@ import json
 import subprocess
 import yaml
 from dataclasses import replace
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple
 from datetime import date
 
 from pathlib import Path
@@ -30,7 +30,8 @@ from daml_dit_api import \
     DABL_META_NAME, \
     DIT_META_NAME, \
     DamlModelInfo, \
-    IntegrationTypeInfo
+    IntegrationTypeInfo, \
+    PackageMetadata
 
 from .log import LOG
 
@@ -181,30 +182,50 @@ def build_pex(pex_filename: str, local_only: bool) -> str:
         return 'python-direct-hub-if'
 
 
-def build_dar(base_filename: str, dar_version: str, rebuild_dar: bool) -> 'Optional[str]':
+def build_dar(
+        dabl_meta: 'PackageMetadata', rebuild_dar: bool
+) -> 'Optional[Tuple[str, DamlModelInfo]]':
 
     if load_daml_yaml() is None:
         LOG.info(f'No Daml model found, skipping DAR build.')
         return None
 
+    catalog = with_catalog(dabl_meta)
+
+    base_filename = catalog.name
+
+    dar_version = daml_yaml_version()
+
     dar_filename = f'{base_filename}-{dar_version}.dar'
+
+    compile_dar = True
 
     if os.path.exists(dar_filename):
         if rebuild_dar:
             LOG.warn(f'>>>>> REPLACING EXISTING DAR: {dar_filename}.')
             os.remove(dar_filename)
         else:
+            compile_dar = False
             LOG.info(f'Retaining existing DAR: {dar_filename}.')
-            return dar_filename
 
-    LOG.info(f'Building DAR file: {dar_filename}')
+    if compile_dar:
+        LOG.info(f'Building DAR file: {dar_filename}')
 
-    completed = subprocess.run(['daml', 'build', '-o', dar_filename])
+        completed = subprocess.run(['daml', 'build', '-o', dar_filename])
 
-    if completed.returncode != 0:
-        die(f'Error building DAR file, rc={completed.returncode}')
+        if completed.returncode != 0:
+            die(f'Error building DAR file, rc={completed.returncode}')
 
-    return dar_filename
+    main_package_id = get_dar_main_package_id(dar_filename)
+
+    daml_model_info = DamlModelInfo(
+        name = catalog.name,
+        version=dar_version,
+        main_package_id=main_package_id)
+
+    LOG.info('Main package ID: %r', main_package_id)
+
+    return (dar_filename, daml_model_info)
 
 
 def get_dar_main_package_id(dar_filename: str) -> str:
@@ -266,21 +287,12 @@ def subcommand_main(
                  ' information will be availble in build.)')
         dar_filename = None
     else:
-        catalog = with_catalog(dabl_meta)
 
-        dar_version = daml_yaml_version()
+        dar_build_result = build_dar(dabl_meta, rebuild_dar)
 
-        dar_filename = build_dar(catalog.name, dar_version, rebuild_dar)
+        if dar_build_result:
+            (dar_filename, daml_model_info) = dar_build_result
 
-        if dar_filename:
-            main_package_id = get_dar_main_package_id(dar_filename)
-
-            daml_model_info = DamlModelInfo(
-                name = catalog.name,
-                version=dar_version,
-                main_package_id=main_package_id)
-
-            LOG.info('Main package ID: %r', main_package_id)
 
     integration_runtime = 'python-direct'
 

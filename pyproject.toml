@@ -16,6 +16,7 @@ daml-dit-api = "0.4.5"
 dazl = "^7"
 GitPython = "3.1.12"
 PyGithub = "1.54.1"
+semver = "*"
 
 [tool.poetry.dev-dependencies]
 mypy = "*"

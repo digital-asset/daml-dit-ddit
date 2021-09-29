@@ -1,5 +1,6 @@
 import os
 import sys
+import semver
 
 from typing import Dict, Optional, NoReturn
 from daml_dit_api.package_metadata import \
@@ -82,10 +83,18 @@ def accept_dabl_meta_bytes(data: bytes) -> 'PackageMetadata':
 
 
 def with_catalog(dabl_meta: 'PackageMetadata') -> 'CatalogInfo':
-    if dabl_meta.catalog is None:
-        die(f'Missing catalog information in project metadata file.')
+    catalog = dabl_meta.catalog
+
+    if catalog is None:
+        die('Missing catalog information in project metadata file.')
     else:
-        return dabl_meta.catalog
+        try:
+            semver.VersionInfo.parse(catalog.version)
+        except ValueError:
+            die('Invalid version number in project metadata file: '
+                f' {catalog.version}')
+
+        return catalog
 
 
 def _check_deprecated(dabl_meta: 'PackageMetadata'):

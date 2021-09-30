@@ -55,7 +55,10 @@ def connect_to_github() -> 'Github':
 
     return github
 
-def subcommand_main(force: bool, dry_run: bool):
+def subcommand_main(
+        force: bool,
+        dry_run: bool,
+        skip_if_present: bool):
 
     dabl_meta = load_dabl_meta()
 
@@ -104,6 +107,25 @@ def subcommand_main(force: bool, dry_run: bool):
         LOG.info('Dry run. Tags and releases not created.')
         return
 
+    github_release = None
+    for release in github_repo.get_releases():
+        if release.tag_name == tag_name:
+            github_release = release
+
+    delete_release = False
+    if github_release:
+        if force:
+            # Deleting the release from Github is deferred until after
+            # the local tag is successfully created and pushed. The rule
+            # of thumb in the release process is that all local changes
+            # are completed before anything is modified on Github itself.
+            delete_release = True
+        elif skip_if_present:
+            LOG.info(f'Release already present, skipping new release: {tag_name}')
+            return
+        else:
+            die(f'Existing release found for tag: {tag_name}')
+
     try:
         repo.create_tag(tag_name, force=force)
     except:
@@ -114,17 +136,9 @@ def subcommand_main(force: bool, dry_run: bool):
     except:
         die(f'Error pushing to remote.')
 
-    github_release = None
-    for release in github_repo.get_releases():
-        if release.tag_name == tag_name:
-            github_release = release
-
-    if github_release:
-        if force:
-            LOG.warn(f'Deleting existing release for tag: {tag_name}')
-            github_release.delete_release()
-        else:
-            die(f'Existing release found for tag: {tag_name}')
+    if github_release and delete_release:
+        LOG.warn(f'Deleting existing release for tag (due to --force): {tag_name}')
+        github_release.delete_release()
 
     LOG.info('Creating new release for tag: %r', tag_name)
     github_release = github_repo.create_git_release(
@@ -142,5 +156,9 @@ def setup(sp):
     sp.add_argument('--force',
                     help='Forcibly overwrite target release and tag if they exist',
                     dest='force', action='store_true', default=False)
+
+    sp.add_argument('--skip-if-present',
+                    help='Skip the release if it is already present in Github.',
+                    dest='skip_if_present', action='store_true', default=False)
 
     return subcommand_main

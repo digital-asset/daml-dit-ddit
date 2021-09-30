@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "daml-dit-ddit"
-version = "0.6.4"
+version = "0.6.5"
 description = "Daml Hub DIT File Tool"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
 readme = "README.md"
@@ -16,6 +16,7 @@ daml-dit-api = "0.4.5"
 dazl = "^7"
 GitPython = "3.1.12"
 PyGithub = "1.54.1"
+semver = "*"
 
 [tool.poetry.dev-dependencies]
 mypy = "*"

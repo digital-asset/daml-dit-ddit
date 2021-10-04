@@ -53,7 +53,7 @@ def subcommand_main(
         LOG.info(f'Argument file found: {args_file}')
     else:
         LOG.info(f'Argument file not found: {args_file}')
-        subcommand_genargs(integration_type_id)
+        subcommand_genargs(integration_type_id, args_file)
         die('Cannot run integration with un-edited argument file.')
 
     if if_file or if_version:

@@ -27,6 +27,7 @@ def subcommand_main(
         party: 'str',
         if_version: 'Optional[str]',
         if_file: 'Optional[str]',
+        args_file: 'str',
         rebuild_dar: bool):
 
     # Ensure that the integration type is known, and print a useful error
@@ -48,11 +49,11 @@ def subcommand_main(
     with open(RUNTIME_DIT_META_NAME, 'w') as runtime_meta_file:
         runtime_meta_file.write(package_meta_yaml(dabl_meta))
 
-    if os.path.isfile(INTEGRATION_ARG_FILE):
-        LOG.info(f'Argument file found: {INTEGRATION_ARG_FILE}')
+    if os.path.isfile(args_file):
+        LOG.info(f'Argument file found: {args_file}')
     else:
-        LOG.info(f'Argument file not found.')
-        subcommand_genargs(integration_type_id)
+        LOG.info(f'Argument file not found: {args_file}')
+        subcommand_genargs(integration_type_id, args_file)
         die('Cannot run integration with un-edited argument file.')
 
     if if_file or if_version:
@@ -72,7 +73,7 @@ def subcommand_main(
         **os.environ,
         'PYTHONPATH': 'src',
         'DABL_INTEGRATION_TYPE_ID': integration_type_id,
-        'DABL_INTEGRATION_METADATA_PATH': INTEGRATION_ARG_FILE,
+        'DABL_INTEGRATION_METADATA_PATH': args_file,
         'DAML_DIT_META_PATH': RUNTIME_DIT_META_NAME,
         'DAML_LEDGER_PARTY': party
     }
@@ -100,5 +101,8 @@ def setup(sp):
 
     sp.add_argument('--if-file', help='Ensure the integration is run with a specific daml-dit-if, by file.',
                     dest='if_file', action='store', default=None)
+
+    sp.add_argument('--args-file', help=f'Use a specified arguments file, defaults to {INTEGRATION_ARG_FILE}.',
+                    dest='args_file', action='store', default=INTEGRATION_ARG_FILE)
 
     return subcommand_main

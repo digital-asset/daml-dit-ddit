@@ -33,6 +33,9 @@ def subcommand_main(force: bool, if_version: 'Optional[str]' = None, if_file: 'O
 
     venv.EnvBuilder(with_pip=True, clear=force).create(VIRTUAL_ENV_DIR)
 
+    LOG.info('Upgrading pip...')
+    install(['--upgrade', 'pip'])
+
     if if_version and if_file:
         die('Cannot specify both --if-version and --if-file')
 

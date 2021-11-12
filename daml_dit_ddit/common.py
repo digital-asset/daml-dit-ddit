@@ -1,6 +1,8 @@
 import os
 import sys
 import semver
+import json
+from urllib import request
 
 from typing import Dict, Optional, NoReturn
 from daml_dit_api.package_metadata import \
@@ -32,6 +34,8 @@ VIRTUAL_ENV_DIR = '.ddit-venv'
 PYTHON_REQUIREMENT_FILE = 'requirements.txt'
 
 INTEGRATION_ARG_FILE = 'int_args.yaml'
+
+PACKAGE_NAME = 'daml-dit-ddit'
 
 def die(message: str) -> 'NoReturn':
     LOG.error(f'Fatal Error: {message}')
@@ -231,3 +235,9 @@ def get_itype(integration_type_id):
 
 
     return itype
+
+def get_latest_version() -> str:
+    url = f'https://pypi.org/pypi/{PACKAGE_NAME}/json'
+    response = request.urlopen(url).read()
+    pkg_data = json.loads(response)
+    return pkg_data['info']['version']

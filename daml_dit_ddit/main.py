@@ -1,12 +1,12 @@
 import argparse
-
+import pkg_resources
 import logging
 
 from typing import Union, List
 
 from .log import setup_default_logging, LOG
 
-from .common import die
+from .common import die, get_latest_version, PACKAGE_NAME
 
 from .subcommand_build import setup as setup_subcommand_build
 from .subcommand_clean import setup as setup_subcommand_clean
@@ -21,7 +21,6 @@ from .subcommand_targetname import setup as setup_subcommand_targetname
 
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--verbose', help='Turn on additional logging.',
                         dest='verbose', action='store_true', default=False)
@@ -75,10 +74,21 @@ def main():
 
     cmd_fn = subcommands.get(subcommand_name)
 
+    def log_version_warning():
+        try:
+            version = pkg_resources.get_distribution(PACKAGE_NAME).version
+            latest_version = get_latest_version()
+            if version != latest_version:
+                LOG.warning(f'There is a new version ({latest_version}) of ddit, please consider updating.')
+        except:
+            pass
+
     if cmd_fn:
         cmd_fn(**kwargs)
+        log_version_warning()
     else:
         parser.print_help()
+        log_version_warning()
 
         die(f'Unknown subcommand: {subcommand_name}'
             if subcommand_name else 'Subcommand missing.')

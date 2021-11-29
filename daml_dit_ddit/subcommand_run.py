@@ -28,7 +28,8 @@ def subcommand_main(
         if_version: 'Optional[str]',
         if_file: 'Optional[str]',
         args_file: 'str',
-        rebuild_dar: bool):
+        rebuild_dar: bool,
+        ledger_url: 'str'):
 
     # Ensure that the integration type is known, and print a useful error
     # message if not.
@@ -72,6 +73,7 @@ def subcommand_main(
     env = {
         **os.environ,
         'PYTHONPATH': 'src',
+        'DABL_LEDGER_URL': ledger_url,
         'DABL_INTEGRATION_TYPE_ID': integration_type_id,
         'DABL_INTEGRATION_METADATA_PATH': args_file,
         'DAML_DIT_META_PATH': RUNTIME_DIT_META_NAME,
@@ -101,6 +103,9 @@ def setup(sp):
 
     sp.add_argument('--if-file', help='Ensure the integration is run with a specific daml-dit-if, by file.',
                     dest='if_file', action='store', default=None)
+
+    sp.add_argument('--ledger-url', help='The URL of the ledger to connect to. Defaults to http://localhost:6865.',
+                    dest='ledger_url', action='store', default='http://localhost:6865')
 
     sp.add_argument('--args-file', help=f'Use a specified arguments file, defaults to {INTEGRATION_ARG_FILE}.',
                     dest='args_file', action='store', default=INTEGRATION_ARG_FILE)

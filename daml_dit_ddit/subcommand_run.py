@@ -28,6 +28,7 @@ def subcommand_main(
         if_version: 'Optional[str]',
         if_file: 'Optional[str]',
         args_file: 'str',
+        ledger_url: 'Optional[str]',
         rebuild_dar: bool):
 
     # Ensure that the integration type is known, and print a useful error
@@ -69,8 +70,10 @@ def subcommand_main(
         LOG.info("Virtual environment missing, installing now.")
         subcommand_install(False)
 
+    url_dict = { 'DABL_LEDGER_URL': ledger_url } if ledger_url else {}
     env = {
         **os.environ,
+        **url_dict,
         'PYTHONPATH': 'src',
         'DABL_INTEGRATION_TYPE_ID': integration_type_id,
         'DABL_INTEGRATION_METADATA_PATH': args_file,
@@ -104,5 +107,8 @@ def setup(sp):
 
     sp.add_argument('--args-file', help=f'Use a specified arguments file, defaults to {INTEGRATION_ARG_FILE}.',
                     dest='args_file', action='store', default=INTEGRATION_ARG_FILE)
+
+    sp.add_argument('--ledger-url', help='The URL of the ledger to connect to.',
+                    dest='ledger_url', action='store', default=None)
 
     return subcommand_main

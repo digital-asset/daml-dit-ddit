@@ -28,6 +28,7 @@ def subcommand_main(
         if_version: 'Optional[str]',
         if_file: 'Optional[str]',
         args_file: 'str',
+        ledger_url: 'str',
         rebuild_dar: bool):
 
     # Ensure that the integration type is known, and print a useful error
@@ -72,6 +73,7 @@ def subcommand_main(
     env = {
         **os.environ,
         'PYTHONPATH': 'src',
+        'DABL_LEDGER_URL': ledger_url,
         'DABL_INTEGRATION_TYPE_ID': integration_type_id,
         'DABL_INTEGRATION_METADATA_PATH': args_file,
         'DAML_DIT_META_PATH': RUNTIME_DIT_META_NAME,
@@ -104,5 +106,8 @@ def setup(sp):
 
     sp.add_argument('--args-file', help=f'Use a specified arguments file, defaults to {INTEGRATION_ARG_FILE}.',
                     dest='args_file', action='store', default=INTEGRATION_ARG_FILE)
+
+    sp.add_argument('--ledger-url', help='The URL of the ledger to connect to. Defaults to http://localhost:6865.',
+                    dest='ledger_url', action='store', default='http://localhost:6865')
 
     return subcommand_main

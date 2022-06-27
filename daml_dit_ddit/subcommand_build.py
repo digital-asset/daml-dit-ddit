@@ -3,7 +3,7 @@ import json
 import subprocess
 import yaml
 from dataclasses import replace
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Sequence, Union, Tuple
 from datetime import date
 
 from pathlib import Path
@@ -23,8 +23,10 @@ from pex.inherit_path import \
 
 from pex.resolver import \
     Unsatisfiable, \
-    parsed_platform, \
-    resolve_multi
+    resolve
+
+from pex.platforms import \
+    Platform
 
 from daml_dit_api import \
     DABL_META_NAME, \
@@ -73,6 +75,19 @@ def pex_write(pex: 'ZipFile', filepath: str, arcname: 'Optional[str]' = None):
     else:
         pex.write(filepath, arcname=arcname)
 
+def parsed_platform(platform=None):
+    # type: (Optional[Union[str, Platform]]) -> Optional[Platform]
+    """Parse the given platform into a `Platform` object.
+
+    Unlike `Platform.create`, this function supports the special platform of 'current' or `None`. This
+    maps to the platform of any local python interpreter.
+
+    :param platform: The platform string to parse. If `None` or 'current', return `None`. If already a
+                     `Platform` object, return it.
+    :return: The parsed platform or `None` for the current platform.
+    """
+    return Platform.create(platform) if platform and platform != "current" else None
+
 def build_pex(pex_filename: str, local_only: bool) -> str:
     pex_builder = PEXBuilder(include_tools=True)
 
@@ -104,7 +119,7 @@ def build_pex(pex_filename: str, local_only: bool) -> str:
             LOG.info(f'No dependency file found ({PYTHON_REQUIREMENT_FILE}), no dependencies will be bundled.')
             requirement_files=[]
 
-        resolveds = resolve_multi(
+        resolveds = resolve(
             requirements=[],
             requirement_files=requirement_files,
             platforms=platforms)

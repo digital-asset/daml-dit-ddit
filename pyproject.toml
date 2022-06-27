@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "daml-dit-ddit"
-version = "0.6.6"
+version = "0.6.7"
 description = "Daml Hub DIT File Tool"
 authors = ["Mike Schaeffer <mike.schaeffer@digitalasset.com>"]
 readme = "README.md"
@@ -8,10 +8,10 @@ repository = "https://github.com/digital-asset/daml-dit-ddit"
 keywords = ["daml", "blockchain", "dlt", "distributed ledger", "digital asset"]
 
 [tool.poetry.dependencies]
-python = ">=3.7, <3.10"
+python = ">=3.7, <3.11"
 dacite = "*"
 pyyaml = "^5"
-pex = "2.1.30"
+pex = "2.1.93"
 daml-dit-api = "0.4.5"
 dazl = "^7"
 GitPython = "3.1.12"

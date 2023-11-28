@@ -30,7 +30,7 @@ PYTHON_REQUIREMENT_FILE = "requirements.txt"
 INTEGRATION_ARG_FILE = "int_args.yaml"
 
 
-def die(message: str) -> "NoReturn":
+def die(message: str) -> NoReturn:
     LOG.error(f"Fatal Error: {message}")
     sys.exit(9)
 
@@ -63,21 +63,21 @@ def daml_yaml_version():
         die(f"No model version specified in {DAML_YAML_NAME}")
 
 
-def accept_dabl_meta(yaml_data: Dict) -> "PackageMetadata":
+def accept_dabl_meta(yaml_data: Dict) -> PackageMetadata:
     try:
         return from_dict(data_class=PackageMetadata, data=yaml_data)
     except:
         die(f"Package metadata does not match expected format.")
 
 
-def accept_dabl_meta_bytes(data: bytes) -> "PackageMetadata":
+def accept_dabl_meta_bytes(data: bytes) -> PackageMetadata:
     try:
         return accept_dabl_meta(yaml.safe_load(data))
     except:
         die(f"Error parsing project metadata file.")
 
 
-def with_catalog(dabl_meta: "PackageMetadata") -> "CatalogInfo":
+def with_catalog(dabl_meta: PackageMetadata) -> CatalogInfo:
     catalog = dabl_meta.catalog
 
     if catalog is None:
@@ -94,29 +94,29 @@ def with_catalog(dabl_meta: "PackageMetadata") -> "CatalogInfo":
         return catalog
 
 
-def _check_deprecated(dabl_meta: "PackageMetadata"):
+def _check_deprecated(dabl_meta: PackageMetadata):
     catalog = with_catalog(dabl_meta)
 
     if catalog.experimental is not None:
         LOG.warn(
             (
-                f"The 'experimental' metadata field is deprecated, and support may be"
-                f" dropped in a future release. Please specify '{TAG_EXPERIMENTAL}'"
-                f" inside the project's tag list instead."
+            f"The 'experimental' metadata field is deprecated, and support may be"
+            f" dropped in a future release. Please specify '{TAG_EXPERIMENTAL}'"
+            f" inside the project's tag list instead."
             )
         )
 
     if dabl_meta.integrations:
         LOG.warn(
             (
-                f"The 'integrations' metadata field is deprecated, and support may be"
-                f" dropped in a future release. Please use  'integration_types'"
-                f" instead."
+            f"The 'integrations' metadata field is deprecated, and support may be"
+            f" dropped in a future release. Please use  'integration_types'"
+            f" instead."
             )
         )
 
 
-def load_dabl_meta() -> "PackageMetadata":
+def load_dabl_meta() -> PackageMetadata:
     raw_dabl_meta = None
 
     daml_yaml = load_daml_yaml()
@@ -158,8 +158,8 @@ def load_dabl_meta() -> "PackageMetadata":
 
 
 def package_meta_integration_types(
-    package_metadata: "PackageMetadata",
-) -> "Dict[str, IntegrationTypeInfo]":
+    package_metadata: PackageMetadata,
+) -> Dict[str, IntegrationTypeInfo]:
     package_itypes = (
         package_metadata.integration_types
         or package_metadata.integrations  # support for deprecated
@@ -169,26 +169,26 @@ def package_meta_integration_types(
     return {itype.id: itype for itype in package_itypes}
 
 
-def get_experimental(catalog: "CatalogInfo"):
-    experimental = (TAG_EXPERIMENTAL in catalog.tags) or (catalog.experimental)
+def get_experimental(catalog: CatalogInfo):
+    experimental = (TAG_EXPERIMENTAL in catalog.tags) or catalog.experimental
     if experimental is None:
         return False
     else:
         return experimental
 
 
-def package_dit_basename(dabl_meta: "PackageMetadata") -> str:
+def package_dit_basename(dabl_meta: PackageMetadata) -> str:
     catalog = with_catalog(dabl_meta)
     return f"{catalog.name}-{catalog.version}"
 
 
-def package_dit_filename(dabl_meta: "PackageMetadata") -> str:
+def package_dit_filename(dabl_meta: PackageMetadata) -> str:
     basename = package_dit_basename(dabl_meta)
 
     return f"{basename}.dit"
 
 
-def show_integration_types(dabl_meta: "PackageMetadata"):
+def show_integration_types(dabl_meta: PackageMetadata):
     itypes = package_meta_integration_types(dabl_meta)
 
     if len(itypes) > 0:
@@ -198,7 +198,7 @@ def show_integration_types(dabl_meta: "PackageMetadata"):
             print(f"   {itype.id} - {itype.name}")
 
 
-def show_daml_model(daml_model: "Optional[DamlModelInfo]"):
+def show_daml_model(daml_model: Optional[DamlModelInfo]):
     print()
 
     if daml_model:
@@ -209,10 +209,11 @@ def show_daml_model(daml_model: "Optional[DamlModelInfo]"):
         print("No Daml model information present")
 
 
-def show_package_summary(dabl_meta: "PackageMetadata"):
+def show_package_summary(dabl_meta: PackageMetadata):
     print("Package Catalog:")
-    for k, v in asdict(dabl_meta.catalog).items():
-        print(f"   {k} : {v}")
+    if dabl_meta.catalog is not None:
+        for k, v in asdict(dabl_meta.catalog).items():
+            print(f"   {k} : {v}")
 
     show_daml_model(dabl_meta.daml_model)
 

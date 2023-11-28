@@ -20,7 +20,7 @@ from .log import LOG, is_verbose
 REQUIRED_SCOPES = set(["repo", "write:packages", "delete:packages"])
 
 
-def connect_to_github() -> "Github":
+def connect_to_github() -> Github:
     github_token = os.environ.get("GITHUB_TOKEN")
 
     if github_token is None:

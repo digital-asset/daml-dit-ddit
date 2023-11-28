@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Optional, Sequence, Tuple
 from zipfile import ZipFile
 
-import yaml
 from daml_dit_api import (
     DABL_META_NAME,
     DIT_META_NAME,
@@ -19,10 +18,10 @@ from daml_dit_api import (
 )
 from dazl.damlast.lookup import parse_type_con_name
 from dazl.damlast.util import package_ref
-from pex.inherit_path import InheritPath
 from pex.pex import PEX
 from pex.pex_builder import PEXBuilder
-from pex.resolver import Unsatisfiable, parsed_platform, resolve_multi
+from pex.platforms import Platform
+from pex.resolver import Unsatisfiable, resolve, ResolvedDistribution
 
 from .common import (
     PYTHON_REQUIREMENT_FILE,
@@ -51,14 +50,14 @@ def check_target_file(filename: str, force: bool):
             die(f"Target file already exists: {filename}")
 
 
-def pex_writestr(pex: "ZipFile", filepath: str, filebytes: bytes):
+def pex_writestr(pex: ZipFile, filepath: str, filebytes: bytes):
     if filepath in pex.namelist():
         LOG.warn(f"  File {filepath} exists in archive -- skipping.")
     else:
         pex.writestr(filepath, filebytes)
 
 
-def pex_write(pex: "ZipFile", filepath: str, arcname: "Optional[str]" = None):
+def pex_write(pex: ZipFile, filepath: str, arcname: Optional[str] = None):
     filename = filepath.split("/")[-1]
     if filename in pex.namelist():
         LOG.warn(f"  File {filename} exists in archive -- skipping.")
@@ -67,19 +66,17 @@ def pex_write(pex: "ZipFile", filepath: str, arcname: "Optional[str]" = None):
 
 
 def build_pex(pex_filename: str, local_only: bool) -> str:
-    pex_builder = PEXBuilder(include_tools=True)
-
-    pex_builder.info.inherit_path = InheritPath.FALLBACK
-
+    pex_builder = PEXBuilder()
+    pex_builder.info.includes_tools = True
+    pex_builder.info.inherit_path = True
     pex_builder.set_entry_point("daml_dit_if.main:main")
     pex_builder.set_shebang("/usr/bin/env python3")
 
-    platforms = [parsed_platform("current")]
-
     if local_only:
         LOG.warn("Local-only build. THIS DIT WILL NOT RUN IN DAML HUB.")
+        platform = Platform.current()
     else:
-        platforms = [*platforms, parsed_platform("manylinux2014_x86_64-cp-38-cp38")]
+        platform = Platform("manylinux_2_17", "x86_64", "3.8", "cp38m")
 
     daml_dit_if_bundled = False
 
@@ -93,8 +90,8 @@ def build_pex(pex_filename: str, local_only: bool) -> str:
             )
             requirement_files = []
 
-        resolveds = resolve_multi(
-            requirements=[], requirement_files=requirement_files, platforms=platforms
+        resolveds: list[ResolvedDistribution] = resolve(
+            requirements=[], requirement_files=requirement_files, platform=platform
         )
 
         for resolved_dist in resolveds:
@@ -111,14 +108,12 @@ def build_pex(pex_filename: str, local_only: bool) -> str:
                 daml_dit_if_bundled = True
 
             LOG.debug("req: %s", resolved_dist.distribution)
-            LOG.debug("     -> target: %s", resolved_dist.target)
 
             pex_builder.add_distribution(resolved_dist.distribution)
-            if resolved_dist.direct_requirement:
-                LOG.info("direct_req: %s", resolved_dist.direct_requirement)
-                LOG.debug("     -> target: %s", resolved_dist.target)
+            if resolved_dist.requirement:
+                LOG.info("direct_req: %s", resolved_dist.requirement)
 
-                pex_builder.add_requirement(resolved_dist.direct_requirement)
+                pex_builder.add_requirement(resolved_dist.requirement)
 
     except Unsatisfiable as e:
         die(f"Unsatifiable dependency error: {e}")
@@ -347,7 +342,9 @@ def subcommand_main(
 
         dabl_meta = replace(
             dabl_meta,
-            catalog=replace(dabl_meta.catalog, release_date=date.today()),
+            catalog=replace(dabl_meta.catalog, release_date=date.today())
+            if dabl_meta.catalog is not None
+            else None,
             daml_model=daml_model_info,
             subdeployments=subdeployments,
             integration_types=[
@@ -379,10 +376,10 @@ def subcommand_main(
 
 
 def normalize_integration_type(
-    itype: "IntegrationTypeInfo",
+    itype: IntegrationTypeInfo,
     runtime: str,
-    daml_model_info: "Optional[DamlModelInfo]",
-) -> "IntegrationTypeInfo":
+    daml_model_info: Optional[DamlModelInfo],
+) -> IntegrationTypeInfo:
     if itype.runtime:
         LOG.warn(
             f"Explicit integration type runtime {itype.runtime} ignored"
@@ -401,7 +398,7 @@ def normalize_integration_type(
         if daml_model_info is None:
             # This could be fixed by adding another option to
             # explicitly bind a Daml model even when ddit is not
-            # managind the Daml model build.
+            # managing the Daml model build.
             die(
                 f"Instance templates cannot be used with --skip-dar-build, due to lack of"
                 f"Daml model info."
@@ -420,7 +417,7 @@ def normalize_integration_type(
                 "instance_template"
             ] = f"{daml_model_info.main_package_id}:{itype.instance_template}"
 
-    return replace(itype, **updates)
+    return replace(itype, **updates)  # type: ignore
 
 
 def setup(sp):

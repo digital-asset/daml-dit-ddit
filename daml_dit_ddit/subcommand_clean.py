@@ -1,19 +1,15 @@
-import os
-import subprocess
-import shutil
+from __future__ import annotations
 
+import os
+import shutil
+import subprocess
 from typing import Optional
 
-from .common import \
-    die, \
-    VIRTUAL_ENV_DIR, \
-    load_dabl_meta, \
-    package_dit_filename
-
+from .common import VIRTUAL_ENV_DIR, die, load_dabl_meta, package_dit_filename
 from .log import LOG
 
-def subcommand_main():
 
+def subcommand_main():
     if os.path.isdir(VIRTUAL_ENV_DIR):
         shutil.rmtree(VIRTUAL_ENV_DIR)
 

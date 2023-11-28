@@ -1,33 +1,30 @@
+from __future__ import annotations
+
 import os
 
 from git import Repo
 from git.exc import InvalidGitRepositoryError
-
 from github import Github
 from github.GithubException import UnknownObjectException
 
-from .common import \
-    TAG_EXPERIMENTAL, \
-    die, \
-    get_experimental, \
-    load_dabl_meta, \
-    package_dit_filename, \
-    with_catalog
-
+from .common import (
+    TAG_EXPERIMENTAL,
+    die,
+    get_experimental,
+    load_dabl_meta,
+    package_dit_filename,
+    with_catalog,
+)
 from .log import LOG, is_verbose
 
-REQUIRED_SCOPES=set([
-    'repo',
-    'write:packages',
-    'delete:packages'
-])
+REQUIRED_SCOPES = set(["repo", "write:packages", "delete:packages"])
 
-def connect_to_github() -> 'Github':
 
-    github_token = os.environ.get('GITHUB_TOKEN')
+def connect_to_github() -> "Github":
+    github_token = os.environ.get("GITHUB_TOKEN")
 
     if github_token is None:
-        die('Missing GitHub token in environment variable GITHUB_TOKEN')
+        die("Missing GitHub token in environment variable GITHUB_TOKEN")
 
     github = Github(github_token)
 
@@ -39,64 +36,61 @@ def connect_to_github() -> 'Github':
 
         user_scopes = set() if github.oauth_scopes is None else set(github.oauth_scopes)
 
-        LOG.info('Connected as user: %r (scopes: %r)', username, user_scopes)
+        LOG.info("Connected as user: %r (scopes: %r)", username, user_scopes)
 
     except:
         if is_verbose():
-            LOG.exception('Error authenticating to GitHub.')
+            LOG.exception("Error authenticating to GitHub.")
 
-        die('Invalid credentials in GITHUB_TOKEN')
-
+        die("Invalid credentials in GITHUB_TOKEN")
 
     if not REQUIRED_SCOPES.issubset(user_scopes):
-        die(f'Github token missing required permissions (oauth scopes):'
-            f'{REQUIRED_SCOPES.difference(user_scopes)}')
-
+        die(
+            f"Github token missing required permissions (oauth scopes):"
+            f"{REQUIRED_SCOPES.difference(user_scopes)}"
+        )
 
     return github
 
-def subcommand_main(
-        force: bool,
-        dry_run: bool,
-        skip_if_present: bool):
 
+def subcommand_main(force: bool, dry_run: bool, skip_if_present: bool):
     dabl_meta = load_dabl_meta()
 
     dit_filename = package_dit_filename(dabl_meta)
 
     if not os.path.exists(dit_filename):
-        die(f'Release artifact not found (run \'ddit build\' to build): {dit_filename}')
+        die(f"Release artifact not found (run 'ddit build' to build): {dit_filename}")
 
     github = connect_to_github()
 
     try:
-        repo = Repo('.')
+        repo = Repo(".")
     except InvalidGitRepositoryError:
-        die('Invalid git repository.')
+        die("Invalid git repository.")
 
     try:
         origin = repo.remote()
-        LOG.info('Remote URL: %r', origin.url)
+        LOG.info("Remote URL: %r", origin.url)
 
-        repo_name = origin.url.split('.git')[0].split(':')[1]
+        repo_name = origin.url.split(".git")[0].split(":")[1]
 
-        LOG.info('Repo name: %r', repo_name)
+        LOG.info("Repo name: %r", repo_name)
 
     except ValueError:
-        die(f'No remote with name \'origin\'.')
+        die(f"No remote with name 'origin'.")
 
     try:
         github_repo = github.get_repo(repo_name)
     except UnknownObjectException:
-        die(f'Remote not found on GitHub: {origin.url}')
+        die(f"Remote not found on GitHub: {origin.url}")
 
     if repo.is_dirty():
-        die('Uncommitted changes in repository')
+        die("Uncommitted changes in repository")
 
     catalog = with_catalog(dabl_meta)
-    tag_name = f'{catalog.name}-v{catalog.version}'
+    tag_name = f"{catalog.name}-v{catalog.version}"
 
-    LOG.info(f'Releasing version {catalog.version} as {tag_name}.')
+    LOG.info(f"Releasing version {catalog.version} as {tag_name}.")
 
     prerelease = get_experimental(catalog)
 
@@ -104,7 +98,7 @@ def subcommand_main(
         LOG.info(f'Found the "{TAG_EXPERIMENTAL}" tag. Creating a prerelease.')
 
     if dry_run:
-        LOG.info('Dry run. Tags and releases not created.')
+        LOG.info("Dry run. Tags and releases not created.")
         return
 
     github_release = None
@@ -121,44 +115,60 @@ def subcommand_main(
             # are completed before anything is modified on Github itself.
             delete_release = True
         elif skip_if_present:
-            LOG.info(f'Release already present, skipping new release: {tag_name}')
+            LOG.info(f"Release already present, skipping new release: {tag_name}")
             return
         else:
-            die(f'Existing release found for tag: {tag_name}')
+            die(f"Existing release found for tag: {tag_name}")
 
     try:
         repo.create_tag(tag_name, force=force)
     except:
-        die(f'Error creating tag: {tag_name}')
+        die(f"Error creating tag: {tag_name}")
 
     try:
         origin.push(tag_name, force=force)
     except:
-        die(f'Error pushing to remote.')
+        die(f"Error pushing to remote.")
 
     if github_release and delete_release:
-        LOG.warn(f'Deleting existing release for tag (due to --force): {tag_name}')
+        LOG.warn(f"Deleting existing release for tag (due to --force): {tag_name}")
         github_release.delete_release()
 
-    LOG.info('Creating new release for tag: %r', tag_name)
+    LOG.info("Creating new release for tag: %r", tag_name)
     github_release = github_repo.create_git_release(
-        tag_name, tag_name, f'DIT file release (ddit) - {tag_name}', prerelease=prerelease)
+        tag_name,
+        tag_name,
+        f"DIT file release (ddit) - {tag_name}",
+        prerelease=prerelease,
+    )
 
-    LOG.info('Uploading release asset: %r', dit_filename)
+    LOG.info("Uploading release asset: %r", dit_filename)
     github_release.upload_asset(dit_filename, dit_filename)
 
 
 def setup(sp):
-    sp.add_argument('--dry-run',
-                    help='Do not create tags or releases.',
-                    dest='dry_run', action='store_true', default=False)
+    sp.add_argument(
+        "--dry-run",
+        help="Do not create tags or releases.",
+        dest="dry_run",
+        action="store_true",
+        default=False,
+    )
 
-    sp.add_argument('--force',
-                    help='Forcibly overwrite target release and tag if they exist',
-                    dest='force', action='store_true', default=False)
+    sp.add_argument(
+        "--force",
+        help="Forcibly overwrite target release and tag if they exist",
+        dest="force",
+        action="store_true",
+        default=False,
+    )
 
-    sp.add_argument('--skip-if-present',
-                    help='Skip the release if it is already present in Github.',
-                    dest='skip_if_present', action='store_true', default=False)
+    sp.add_argument(
+        "--skip-if-present",
+        help="Skip the release if it is already present in Github.",
+        dest="skip_if_present",
+        action="store_true",
+        default=False,
+    )
 
     return subcommand_main

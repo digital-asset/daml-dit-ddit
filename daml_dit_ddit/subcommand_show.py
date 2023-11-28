@@ -1,6 +1,6 @@
-from .common import \
-    load_dabl_meta, \
-    show_package_summary
+from __future__ import annotations
+
+from .common import load_dabl_meta, show_package_summary
 
 
 def subcommand_main():

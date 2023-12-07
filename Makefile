@@ -35,6 +35,12 @@ install: build
 .PHONY: build
 build: typecheck $(daml_dit_ddit_bdist) $(daml_dit_ddit_sdist)
 
+.PHONY: format
+format:
+	poetry run isort daml_dit_ddit
+	poetry run black daml_dit_ddit
+
+
 .PHONY: version
 version:
 	@echo $(version)

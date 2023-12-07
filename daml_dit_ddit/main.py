@@ -5,7 +5,7 @@ import logging
 from typing import List, Union
 
 from .common import die
-from .log import LOG, setup_default_logging
+from .log import setup_default_logging
 from .subcommand_build import setup as setup_subcommand_build
 from .subcommand_clean import setup as setup_subcommand_clean
 from .subcommand_ditversion import setup as setup_subcommand_ditversion
